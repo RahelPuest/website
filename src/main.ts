@@ -8,7 +8,7 @@ function lerp(a: number, b: number, t: number): number {
   TextureStyle.defaultOptions.scaleMode = 'nearest'
 
   const app = new Application();
-  await app.init({ background: "#1099bb", resizeTo: window });
+  await app.init({ background: "#bb1085", resizeTo: window });
 
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
@@ -47,6 +47,7 @@ function lerp(a: number, b: number, t: number): number {
     const dist = Math.hypot(dx, dy);
 
     const moving = dist > stopEps;
+
 
     if (moving) {
       if (!actor.playing) actor.play();

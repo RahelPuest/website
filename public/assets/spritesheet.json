@@ -1,27 +1,27 @@
 {
     "frames": {
         "walk_00": {
-            "frame": {"x": 0, "y": 0, "w": 12, "h": 32},
+            "frame": {"x": 0, "y": 0, "w": 12, "h": 24},
             "rotated": false,
             "trimmed": false
         },
         "walk_01": {
-            "frame": {"x": 12, "y": 0, "w": 12, "h": 32},
+            "frame": {"x": 12, "y": 0, "w": 12, "h": 24},
             "rotated": false,
             "trimmed": false
         },
         "walk_02": {
-            "frame": {"x": 24, "y": 0, "w": 12, "h": 32},
+            "frame": {"x": 24, "y": 0, "w": 12, "h": 24},
             "rotated": false,
             "trimmed": false
         },
         "walk_03": {
-            "frame": {"x": 32, "y": 0, "w": 12, "h": 32},
+            "frame": {"x": 36, "y": 0, "w": 12, "h": 24},
             "rotated": false,
             "trimmed": false
         },
         "walk_04": {
-            "frame": {"x": 44, "y": 0, "w": 12, "h": 32},
+            "frame": {"x": 48, "y": 0, "w": 12, "h": 24},
             "rotated": false,
             "trimmed": false
         }
@@ -32,7 +32,7 @@
     },
 
     "meta": {
-        "image": "spritesheet.png",
-        "scale": ".25"
+        "image": "me.png",
+        "scale": ".1"
     }
 }
