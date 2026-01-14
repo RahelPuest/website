@@ -1,63 +1,59 @@
-import { Application, Assets, Rectangle, AnimatedSprite, TextureStyle } from "pixi.js";
+import {
+  Application,
+  Assets,
+  Rectangle,
+  TextureStyle,
+  Text,
+} from "pixi.js";
 
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
+import { Actor } from "./actor.ts";
 
 (async () => {
-  TextureStyle.defaultOptions.scaleMode = 'nearest'
+  TextureStyle.defaultOptions.scaleMode = "nearest";
 
   const app = new Application();
-  await app.init({ background: "#bb1085", resizeTo: window });
+  await app.init({ background: "#330825", resizeTo: window });
 
+  await Assets.load("/assets/fonts/ByteBounce.ttf");
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   const sheet = await Assets.load("/assets/spritesheet.json");
-  const actor = new AnimatedSprite(sheet.animations["walk"]);
-  actor.anchor.set(0.5);
-  actor.position.set(app.screen.width / 2, app.screen.height / 2);
-  actor.animationSpeed = 0.15; // tweak
-  actor.stop(); // idle initially
-  app.stage.addChild(actor);
+
+  const actor = new Actor({
+    sheet,
+    animationName: "walk",
+    x: app.screen.width / 2,
+    y: app.screen.height / 2,
+    speed: 400,
+    stopEps: 0.5,
+    animationSpeed: 0.15,
+  });
+
+  app.stage.addChild(actor.view);
 
   app.stage.eventMode = "static";
   app.stage.hitArea = new Rectangle(0, 0, app.screen.width, app.screen.height);
 
-  let targetX = actor.x;
-  let targetY = actor.y;
+  console.log(app.screen.width, app.screen.height
+  )
 
   app.stage.on("pointerdown", (e) => {
-    targetX = e.global.x;
-    targetY = e.global.y;
+    actor.setTarget(e.global.x, e.global.y);
   });
+
+  const myText = new Text({
+    text: "Oh, how did I end up here?",
+    style: { fill: "#00b913", fontSize: 72, fontFamily: "ByteBounce" },
+  });
+  myText.anchor.set(0.5);
+  myText.position.set(500, 300);
+  app.stage.addChild(myText);
 
   window.addEventListener("resize", () => {
     app.stage.hitArea = new Rectangle(0, 0, app.screen.width, app.screen.height);
   });
 
-  const speed = 400; // px per second
-  const stopEps = 0.5;
-
   app.ticker.add((time) => {
-  const dt = time.deltaMS / 1000;
-    const step = speed * dt;
-
-    const dx = targetX - actor.x;
-    const dy = targetY - actor.y;
-    const dist = Math.hypot(dx, dy);
-
-    const moving = dist > stopEps;
-
-
-    if (moving) {
-      if (!actor.playing) actor.play();
-
-      const t = Math.min(1, step / dist);
-      actor.x = lerp(actor.x, targetX, t);
-      actor.y = lerp(actor.y, targetY, t);
-    } else {
-      if (actor.playing) actor.stop();
-      actor.position.set(targetX, targetY);
-    }
+    actor.update(time.deltaMS / 1000);
   });
 })();
