@@ -24,6 +24,16 @@
             "frame": {"x": 48, "y": 0, "w": 12, "h": 24},
             "rotated": false,
             "trimmed": false
+        },
+        "walk_05": {
+            "frame": {"x": 60, "y": 0, "w": 12, "h": 24},
+            "rotated": false,
+            "trimmed": false
+        },
+        "walk_06": {
+            "frame": {"x": 72, "y": 0, "w": 12, "h": 24},
+            "rotated": false,
+            "trimmed": false
         }
     },
 
