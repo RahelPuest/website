@@ -3,7 +3,8 @@ import {
   Assets,
   Rectangle,
   TextureStyle,
-  Text,
+  Texture,
+  Sprite,
 } from "pixi.js";
 
 import { Actor } from "./actor.ts";
@@ -18,6 +19,11 @@ import { DialogLine } from "./dialogLine.ts";
   const app = new Application();
   await app.init({ background: "#330825", resizeTo: window });
 
+  const backgroundTexture = await Assets.load("/assets/background.png");
+  const background = new Sprite(backgroundTexture)
+  background.scale.set(7);
+  app.stage.addChild(background);
+
   await Assets.load("/assets/fonts/ByteBounce.ttf");
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
@@ -25,7 +31,8 @@ import { DialogLine } from "./dialogLine.ts";
 
   const actor = new Actor({
     sheet,
-    animationName: "walk",
+    walkAnimationName: "walk",
+    idleAnimationName: "idle",
     x: app.screen.width / 2,
     y: app.screen.height / 2,
     speed: 400,
@@ -39,7 +46,7 @@ import { DialogLine } from "./dialogLine.ts";
     stageTexture: paperTex,
     inventarTexture: paperTex, 
     x: 600,
-    y: 500,
+    y: 800,
   });
 
   app.stage.addChild(actor.view);
@@ -71,15 +78,13 @@ import { DialogLine } from "./dialogLine.ts";
   item.stageView.on("pointerdown", (e) => {
     const dialogLine = new DialogLine({
       text: "This Rahel person seems pretty awesome!",
-      x: 500,
-      y: 500,
-      durationMs: 2000,
+      x: actor.view.position.x + 48,
+      y: actor.view.position.y - 64,
+      durationMs: 5000,
     });
     dialogLine.show(app.stage);
     dialogLines.push(dialogLine);
   })
-
-
 
   app.ticker.add((time) => {
     actor.update(time.deltaMS / 1000);

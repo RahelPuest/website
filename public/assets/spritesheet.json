@@ -30,7 +30,7 @@
             "rotated": false,
             "trimmed": false
         },
-        "walk_06": {
+        "idle_00": {
             "frame": {"x": 72, "y": 0, "w": 12, "h": 24},
             "rotated": false,
             "trimmed": false
@@ -38,7 +38,8 @@
     },
 
     "animations": {
-        "walk": ["walk_01", "walk_02", "walk_03"]
+        "walk": ["walk_00", "walk_01", "walk_02", "walk_03", "walk_04", "walk_05"],
+        "idle": ["idle_00"]
     },
 
     "meta": {
