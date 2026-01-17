@@ -16,7 +16,7 @@ export class Item {
     this.stageView.anchor.set(0.5);
     this.stageView.position.set(opts.x, opts.y);
 
-    this.stageView.scale.set(5);
+    this.stageView.scale.set(0.5);
 
     this.stageView.eventMode = "static"
     this.stageView.cursor = "pointer";
