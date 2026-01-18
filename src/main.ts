@@ -10,10 +10,11 @@ import {
 import { Actor } from "./actor.ts";
 import { Item } from "./item.ts";
 import { DialogLine } from "./dialogLine.ts";
+import { ScaleManager } from "./scaleManager.ts";
+import { DialogManager } from "./dialogManager.ts";
 
 const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
-
 const USE_INTEGER_SCALING = false;
 
 let app: Application;
@@ -23,63 +24,11 @@ let ui: Container;
 let actor: Actor;
 let item: Item;
 
-const dialogLines: DialogLine[] = [];
-
-let worldScale = 1;
-let worldOffsetX = 0;
-let worldOffsetY = 0;
-
-function fitSpriteContain(sprite: Sprite, targetW: number, targetH: number): void {
-  const tw = sprite.texture.width;
-  const th = sprite.texture.height;
-
-  if (tw <= 0 || th <= 0) return;
-
-  const scale = Math.min(targetW / tw, targetH / th);
-  sprite.scale.set(scale);
-  sprite.position.set((targetW - tw * scale) / 2, (targetH - th * scale) / 2);
-}
-
-function worldToScreenX(wx: number): number {
-  return worldOffsetX + wx * worldScale;
-}
-
-function worldToScreenY(wy: number): number {
-  return worldOffsetY + wy * worldScale;
-}
-
-function applyResize(): void {
-  const screenW = app.screen.width;
-  const screenH = app.screen.height;
-
-  const rawScale = Math.min(screenW / VIRTUAL_WIDTH, screenH / VIRTUAL_HEIGHT);
-  worldScale = USE_INTEGER_SCALING ? Math.max(1, Math.floor(rawScale)) : rawScale;
-
-  const worldPixelW = VIRTUAL_WIDTH * worldScale;
-  const worldPixelH = VIRTUAL_HEIGHT * worldScale;
-
-  worldOffsetX = (screenW - worldPixelW) / 2;
-  worldOffsetY = (screenH - worldPixelH) / 2;
-
-  world.scale.set(worldScale);
-  world.position.set(worldOffsetX, worldOffsetY);
-
-  // IMPORTANT: UI stays in screen coordinates, so do NOT scale or offset it.
-  ui.scale.set(1);
-  ui.position.set(0, 0);
-}
+let  dialogManager: DialogManager;
+let scaleManager: ScaleManager;
 
 function onWindowResize(): void {
-  applyResize();
-}
-
-function addDialogLine(text: string, worldX: number, worldY: number, durationMs: number): void {
-  const screenX = worldToScreenX(worldX);
-  const screenY = worldToScreenY(worldY);
-
-  const line = new DialogLine({ text, x: screenX, y: screenY, durationMs });
-  line.show(ui);
-  dialogLines.push(line);
+  scaleManager.applyResize(app.screen.width, app.screen.height);
 }
 
 function onWorldPointerDown(e: any): void {
@@ -88,20 +37,13 @@ function onWorldPointerDown(e: any): void {
 }
 
 function onItemPointerDown(): void {
-  addDialogLine(
-    "This Rahel person seems pretty awesome!",
-    actor.view.position.x + 8,
-    actor.view.position.y - 12,
-    5000
-  );
+  dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
+  //actor.sayLine("This Rahel person seems pretty awesome!", ui);
 }
 
 function onTick(time: any): void {
   actor.update(time.deltaMS / 1000);
-
-  for (let i = 0; i < dialogLines.length; i += 1) {
-    dialogLines[i].update(time.deltaMS);
-  }
+  dialogManager.onTick(time.deltaMS);
 }
 
 async function main(): Promise<void> {
@@ -123,6 +65,16 @@ async function main(): Promise<void> {
   app.stage.addChild(world);
   app.stage.addChild(ui);
 
+  // Scale manager holds all scaling state (no exports needed)
+  scaleManager = new ScaleManager({
+    virtualWidth: VIRTUAL_WIDTH,
+    virtualHeight: VIRTUAL_HEIGHT,
+    useIntegerScaling: USE_INTEGER_SCALING,
+  });
+  scaleManager.bind(world, ui);
+
+  dialogManager = new DialogManager(ui, scaleManager);
+
   world.eventMode = "static";
   world.hitArea = new Rectangle(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
@@ -134,7 +86,7 @@ async function main(): Promise<void> {
   const background = new Sprite(backgroundTexture);
   background.anchor.set(0, 0);
   world.addChild(background);
-  fitSpriteContain(background, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+  scaleManager.fitSpriteContain(background, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
   actor = new Actor({
     sheet,
@@ -145,6 +97,8 @@ async function main(): Promise<void> {
     speed: 60,
     stopEps: 0.5,
     animationSpeed: 0.15,
+    scaleManager: scaleManager,
+    dialogManager: dialogManager,
   });
 
   item = new Item({
@@ -162,11 +116,13 @@ async function main(): Promise<void> {
   world.on("pointerdown", onWorldPointerDown);
   item.stageView.on("pointerdown", onItemPointerDown);
 
-  applyResize();
+  scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);
 
-  // Initial dialog: pass WORLD coordinates
-  addDialogLine("Oh, how did I end up here?", 20, 20, 2000);
+  //addDialogLine("Oh, how did I end up here?", 20, 20, 2000);
+  //actor.sayLine("Oh, how did I end up here?", ui)
+
+  dialogManager.addLine(actor, "Oh, how did I end up here?");
 
   app.ticker.add(onTick);
 }

@@ -1,5 +1,7 @@
 import { Sprite, Texture } from "pixi.js";
 
+const DEFAULT_INTERACTION_RADIUS = 16;
+
 export class Item {
   public readonly stageView: Sprite;
   public readonly inventarView: Sprite;

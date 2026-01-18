@@ -1,4 +1,8 @@
 import { AnimatedSprite, Spritesheet, Texture } from "pixi.js";
+import { DialogLine } from "./dialogLine";
+import { ScaleManager } from "./scaleManager";
+import { Container } from "pixi.js";
+import { DialogManager } from "./dialogManager";
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
@@ -18,6 +22,9 @@ export class Actor {
 
   private isMoving: boolean = false;
 
+  private scaleManager: ScaleManager;
+  private dialogManager: DialogManager;
+
   constructor(opts: {
     sheet: Spritesheet;
     walkAnimationName: string;
@@ -27,6 +34,8 @@ export class Actor {
     speed?: number;
     stopEps?: number;
     animationSpeed?: number;
+    scaleManager: ScaleManager;
+    dialogManager: DialogManager;
   }) {
     const walkAnim = opts.sheet.animations[opts.walkAnimationName];
     if (!walkAnim) throw new Error(`Animation not found: ${opts.walkAnimationName}`);
@@ -37,19 +46,21 @@ export class Actor {
     this.walkTextures = walkAnim;
     this.idleTextures = idleAnim;
 
-    // Start in idle (typischer)
     this.view = new AnimatedSprite(this.idleTextures);
     this.view.anchor.set(0.5);
     this.view.position.set(opts.x, opts.y);
 
     this.view.animationSpeed = opts.animationSpeed ?? 0.15;
-    this.view.play(); // idle läuft
+    this.view.play();
 
     this.targetX = opts.x;
     this.targetY = opts.y;
 
     this.speed = opts.speed ?? 400;
     this.stopEps = opts.stopEps ?? 0.5;
+
+    this.scaleManager = opts.scaleManager;
+    this.dialogManager = opts.dialogManager;
   }
 
   public setTarget(x: number, y: number): void {
@@ -81,7 +92,6 @@ export class Actor {
       return;
     }
 
-    // stopped
     if (this.isMoving) {
       this.isMoving = false;
       this.switchToIdle();
@@ -91,7 +101,6 @@ export class Actor {
   }
 
   private switchToWalk(): void {
-    // nur wechseln, wenn nicht eh schon walk gesetzt ist
     if (this.view.textures !== this.walkTextures) {
       this.view.textures = this.walkTextures;
       this.view.currentFrame = 0;

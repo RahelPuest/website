@@ -1,4 +1,4 @@
-import { Container, Text } from "pixi.js";
+import { Container, Text, Point } from "pixi.js";
 
 export class DialogLine {
   private readonly textView: Text;
@@ -18,7 +18,6 @@ export class DialogLine {
       style:{ fill: "#00b913", fontSize: 72, fontFamily: "ByteBounce" },
     });
 
-    //this.textView.anchor.set(0.5);
     this.textView.position.set(opts.x, opts.y);
   }
 
@@ -32,14 +31,25 @@ export class DialogLine {
     if (!this.isShown) return;
 
     this.remainingMs -= dtMs;
+
     if (this.remainingMs <= 0) {
+      this.remainingMs = 0;
       this.textView.removeFromParent();
       this.textView.destroy();
       this.isShown = false;
     }
   }
 
-  public get alive(): boolean {
-    return this.isShown;
+  public setPosition(x: number, y: number): void {
+    this.textView.position.set(x, y);
   }
+
+  public get alive(): boolean {
+    return this.remainingMs > 0;
+  }
+
+  public get position(): Point {
+    return this.textView.position;
+  }
+
 }
