@@ -1,8 +1,7 @@
-import { AnimatedSprite, Spritesheet, Texture } from "pixi.js";
-import { DialogLine } from "./dialogLine";
+import { AnimatedSprite, Spritesheet, Texture, Point } from "pixi.js";
 import { ScaleManager } from "./scaleManager";
-import { Container } from "pixi.js";
 import { DialogManager } from "./dialogManager";
+import type { Room } from "./room";
 
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
@@ -25,6 +24,8 @@ export class Actor {
   private scaleManager: ScaleManager;
   private dialogManager: DialogManager;
 
+  private room: Room;
+
   constructor(opts: {
     sheet: Spritesheet;
     walkAnimationName: string;
@@ -36,6 +37,7 @@ export class Actor {
     animationSpeed?: number;
     scaleManager: ScaleManager;
     dialogManager: DialogManager;
+    room: Room; // NEW
   }) {
     const walkAnim = opts.sheet.animations[opts.walkAnimationName];
     if (!walkAnim) throw new Error(`Animation not found: ${opts.walkAnimationName}`);
@@ -47,7 +49,8 @@ export class Actor {
     this.idleTextures = idleAnim;
 
     this.view = new AnimatedSprite(this.idleTextures);
-    this.view.anchor.set(0.5);
+    this.view.anchor._x = 0.5;
+    this.view.anchor._y = 0.8;
     this.view.position.set(opts.x, opts.y);
 
     this.view.animationSpeed = opts.animationSpeed ?? 0.15;
@@ -61,6 +64,8 @@ export class Actor {
 
     this.scaleManager = opts.scaleManager;
     this.dialogManager = opts.dialogManager;
+
+    this.room = opts.room; // NEW
   }
 
   public setTarget(x: number, y: number): void {
@@ -71,34 +76,51 @@ export class Actor {
     else if (x > this.view.x) this.faceRight();
   }
 
-  public update(dtSeconds: number): void {
-    const dx = this.targetX - this.view.x;
-    const dy = this.targetY - this.view.y;
-    const dist = Math.hypot(dx, dy);
+  public onTick(dtSeconds: number): void {
+  const dx = this.targetX - this.view.x;
+  const dy = this.targetY - this.view.y;
+  const dist = Math.hypot(dx, dy);
 
-    const movingNow = dist > this.stopEps;
+  const movingNow = dist > this.stopEps;
 
-    if (movingNow) {
-      if (!this.isMoving) {
-        this.isMoving = true;
-        this.switchToWalk();
-      }
-
-      const step = this.speed * dtSeconds;
-      const t = Math.min(1, step / dist);
-
-      this.view.x = lerp(this.view.x, this.targetX, t);
-      this.view.y = lerp(this.view.y, this.targetY, t);
-      return;
+  if (movingNow) {
+    if (!this.isMoving) {
+      this.isMoving = true;
+      this.switchToWalk();
     }
 
-    if (this.isMoving) {
+    const prevX = this.view.x;
+    const prevY = this.view.y;
+
+    const step = this.speed * dtSeconds;
+    const t = Math.min(1, step / dist);
+
+    // do the step
+    this.view.x = lerp(prevX, this.targetX, t);
+    this.view.y = lerp(prevY, this.targetY, t);
+
+    // if step ends in blocked -> rollback and stop
+    if (!this.room.isPassable(new Point(this.view.x, this.view.y))) {
+      this.view.x = prevX;
+      this.view.y = prevY;
+
+      this.targetX = prevX;
+      this.targetY = prevY;
+
       this.isMoving = false;
       this.switchToIdle();
     }
 
-    this.view.position.set(this.targetX, this.targetY);
+    return;
   }
+
+  if (this.isMoving) {
+    this.isMoving = false;
+    this.switchToIdle();
+  }
+
+  this.view.position.set(this.targetX, this.targetY);
+}
 
   private switchToWalk(): void {
     if (this.view.textures !== this.walkTextures) {

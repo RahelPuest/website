@@ -3,15 +3,14 @@ import {
   Assets,
   Container,
   Rectangle,
-  Sprite,
   TextureStyle,
 } from "pixi.js";
 
 import { Actor } from "./actor.ts";
 import { Item } from "./item.ts";
-import { DialogLine } from "./dialogLine.ts";
 import { ScaleManager } from "./scaleManager.ts";
 import { DialogManager } from "./dialogManager.ts";
+import { Room } from "./room.ts";
 
 const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
@@ -24,8 +23,10 @@ let ui: Container;
 let actor: Actor;
 let item: Item;
 
-let  dialogManager: DialogManager;
+let dialogManager: DialogManager;
 let scaleManager: ScaleManager;
+
+let room: Room;
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
@@ -38,11 +39,10 @@ function onWorldPointerDown(e: any): void {
 
 function onItemPointerDown(): void {
   dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
-  //actor.sayLine("This Rahel person seems pretty awesome!", ui);
 }
 
 function onTick(time: any): void {
-  actor.update(time.deltaMS / 1000);
+  actor.onTick(time.deltaMS / 1000);
   dialogManager.onTick(time.deltaMS);
 }
 
@@ -65,7 +65,6 @@ async function main(): Promise<void> {
   app.stage.addChild(world);
   app.stage.addChild(ui);
 
-  // Scale manager holds all scaling state (no exports needed)
   scaleManager = new ScaleManager({
     virtualWidth: VIRTUAL_WIDTH,
     virtualHeight: VIRTUAL_HEIGHT,
@@ -78,33 +77,37 @@ async function main(): Promise<void> {
   world.eventMode = "static";
   world.hitArea = new Rectangle(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
+  // Assets
   const backgroundTexture = await Assets.load("/assets/background.png");
+  const walkMaskTexture = await Assets.load("/assets/walkMask.png");
   const sheet = await Assets.load("/assets/spritesheet.json");
   const paperTex = await Assets.load("/assets/paper.png");
   await Assets.load("/assets/fonts/ByteBounce.ttf");
 
-  const background = new Sprite(backgroundTexture);
-  background.anchor.set(0, 0);
-  world.addChild(background);
-  scaleManager.fitSpriteContain(background, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+  // Room handles background sprite internally
+  room = new Room(app.renderer);
+  room.addState("default", backgroundTexture, walkMaskTexture);
+  room.attach(world, scaleManager, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+  room.switchState("default");
 
   actor = new Actor({
     sheet,
     walkAnimationName: "walk",
     idleAnimationName: "idle",
     x: VIRTUAL_WIDTH / 2,
-    y: VIRTUAL_HEIGHT / 2,
+    y: VIRTUAL_HEIGHT / 2 + 32,
     speed: 60,
     stopEps: 0.5,
     animationSpeed: 0.15,
     scaleManager: scaleManager,
     dialogManager: dialogManager,
+    room: room,
   });
 
   item = new Item({
     stageTexture: paperTex,
     inventarTexture: paperTex,
-    x: 180,
+    x: 160,
     y: 95,
   });
 
@@ -118,9 +121,6 @@ async function main(): Promise<void> {
 
   scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);
-
-  //addDialogLine("Oh, how did I end up here?", 20, 20, 2000);
-  //actor.sayLine("Oh, how did I end up here?", ui)
 
   dialogManager.addLine(actor, "Oh, how did I end up here?");
 

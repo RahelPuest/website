@@ -18,6 +18,7 @@ export class DialogLine {
       style:{ fill: "#00b913", fontSize: 72, fontFamily: "ByteBounce" },
     });
 
+    this.textView.anchor.set(0.5);
     this.textView.position.set(opts.x, opts.y);
   }
 
