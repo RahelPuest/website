@@ -32,14 +32,14 @@ export class ScaleManager {
     this.ui = ui;
   }
 
-  public fitSpriteContain(sprite: Sprite, targetW: number, targetH: number): void {
+  public fitSpriteContain(sprite: Sprite): void {
     const tw = sprite.texture.width;
     const th = sprite.texture.height;
     if (tw <= 0 || th <= 0) return;
 
-    const scale = Math.min(targetW / tw, targetH / th);
+    const scale = Math.min(this.virtualWidth / tw, this.virtualHeight / th);
     sprite.scale.set(scale);
-    sprite.position.set((targetW - tw * scale) / 2, (targetH - th * scale) / 2);
+    sprite.position.set((this.virtualWidth - tw * scale) / 2, (this.virtualHeight - th * scale) / 2);
   }
 
   public worldToScreenX(wx: number): number {

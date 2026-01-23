@@ -4,6 +4,7 @@ import {
   Container,
   Rectangle,
   TextureStyle,
+  Polygon,
 } from "pixi.js";
 
 import { Actor } from "./actor.ts";
@@ -79,16 +80,18 @@ async function main(): Promise<void> {
 
   // Assets
   const backgroundTexture = await Assets.load("/assets/background.png");
-  const walkMaskTexture = await Assets.load("/assets/walkMask.png");
+  //const walkMaskTexture = await Assets.load("/assets/walkMask.png");
   const sheet = await Assets.load("/assets/spritesheet.json");
   const paperTex = await Assets.load("/assets/paper.png");
   await Assets.load("/assets/fonts/ByteBounce.ttf");
 
   // Room handles background sprite internally
-  room = new Room(app.renderer);
-  room.addState("default", backgroundTexture, walkMaskTexture);
-  room.attach(world, scaleManager, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-  room.switchState("default");
+  room = new Room({
+    background: backgroundTexture,
+    walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
+    scaleManager: scaleManager,
+  });
+  room.attach(world);
 
   actor = new Actor({
     sheet,
