@@ -36,6 +36,7 @@ let itemManager: ItemManager;
 let room: Room;
 
 type Verbs = "look" | "use" | "pickup";
+let currentVerb: Verbs = "pickup"
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
@@ -52,7 +53,11 @@ function onItemPointerDown(e: FederatedPointerEvent): void {
   const item = itemManager.getById(itemId);
   if(item) {
     actor.setTarget(item.interactionPoint.x, item.interactionPoint.y);
-    dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
+    switch(currentVerb) {
+      case "look": item.onLook?.(); break;
+      case "pickup": item.onPickUp?.(); break;
+      case "use": item.onUse?.(); break;
+    }
   }
   e.stopPropagation();
 }
@@ -108,6 +113,12 @@ async function main(): Promise<void> {
     x: 160,
     y: 95,
     interactionPoint: new Point(150, 95),
+    onLook: () => {
+      dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
+    },
+    onPickUp: () => {
+      dialogManager.addLine(actor, "I will take this.");
+    }
   });
   itemManager.add(cv.id, cv);
 
@@ -117,7 +128,13 @@ async function main(): Promise<void> {
     inventarTexture: lightSwitchTexture,
     x: 200,
     y: 70,
-    interactionPoint: new Point(200, 90),
+    interactionPoint: new Point(195, 80),
+    onLook: () => {
+      dialogManager.addLine(actor, "A strangely oversized light switch. Weird.");
+    },
+    onPickUp: () => {
+      dialogManager.addLine(actor, "The switch is screwed in place. I can't take it with me.");
+    }
   });
   itemManager.add(lightSwitch.id, lightSwitch);
 
@@ -150,6 +167,7 @@ async function main(): Promise<void> {
 
   world.on("pointerdown", onWorldPointerDown);
   cv.stageView.on("pointerdown", onItemPointerDown);
+  lightSwitch.stageView.on("pointerdown", onItemPointerDown);
 
   scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);

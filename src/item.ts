@@ -36,6 +36,11 @@ export class Item {
     this.inventarView = new Sprite(opts.inventarTexture);
     this.interactionPoint = opts.interactionPoint;
 
+    this.onPickUp = opts.onPickUp;
+    this.onLook = opts.onLook;
+    this.onUse = opts.onUse;
+    this.onUseWith = opts.onUseWith;
+
     this.stageView.anchor.set(0.5);
     this.stageView.position.set(opts.x, opts.y);
 
