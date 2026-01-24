@@ -5,6 +5,9 @@ import {
   Rectangle,
   TextureStyle,
   Polygon,
+  Point,
+  FederatedPointerEvent,
+  Sprite,
 } from "pixi.js";
 
 import { Actor } from "./actor.ts";
@@ -24,12 +27,15 @@ let ui: Container;
 
 let actor: Actor;
 let cv: Item;
+let lightSwitch: Item;
 
 let dialogManager: DialogManager;
 let scaleManager: ScaleManager;
 let itemManager: ItemManager;
 
 let room: Room;
+
+type Verbs = "look" | "use" | "pickup";
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
@@ -40,8 +46,15 @@ function onWorldPointerDown(e: any): void {
   actor.setTarget(p.x, p.y);
 }
 
-function onItemPointerDown(): void {
-  dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
+function onItemPointerDown(e: FederatedPointerEvent): void {
+  const sprite = e.currentTarget as Sprite;
+  const itemId = (sprite as any).__id as string;
+  const item = itemManager.getById(itemId);
+  if(item) {
+    actor.setTarget(item.interactionPoint.x, item.interactionPoint.y);
+    dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
+  }
+  e.stopPropagation();
 }
 
 function onTick(time: any): void {
@@ -85,23 +98,35 @@ async function main(): Promise<void> {
   const backgroundTexture = await Assets.load("/assets/background.png");
   const sheet = await Assets.load("/assets/spritesheet.json");
   const cvTexture = await Assets.load("/assets/paper.png");
+  const lightSwitchTexture = await Assets.load("/assets/lightSwitch.png")
   await Assets.load("/assets/fonts/ByteBounce.ttf");
 
-    cv = new Item({
+  cv = new Item({
+    id: "cv",
     stageTexture: cvTexture,
     inventarTexture: cvTexture,
     x: 160,
     y: 95,
+    interactionPoint: new Point(150, 95),
   });
-  itemManager.add("cv", cv);
+  itemManager.add(cv.id, cv);
 
+  lightSwitch = new Item({
+    id: "lightSwitch",
+    stageTexture: lightSwitchTexture,
+    inventarTexture: lightSwitchTexture,
+    x: 200,
+    y: 70,
+    interactionPoint: new Point(200, 90),
+  });
+  itemManager.add(lightSwitch.id, lightSwitch);
 
   room = new Room({
     background: backgroundTexture,
     walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
     scaleManager: scaleManager,
     itemManager: itemManager,
-    itemIds: ["cv"],
+    itemIds: ["cv", "lightSwitch"],
   });
   room.attach(world);
 

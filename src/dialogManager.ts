@@ -4,7 +4,7 @@ import { DialogLine } from "./dialogLine";
 import { ScaleManager } from "./scaleManager";
 
 const DEFAULT_LINE_DURATION_MS = 2000;
-const DEFAULT_VERTICAL_LINE_OFFEST = 148;
+const DEFAULT_VERTICAL_LINE_OFFEST = 172;
 
 export class DialogManager {
   private dialogLines = new Map<Actor, DialogLine[]>();
