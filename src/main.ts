@@ -12,6 +12,7 @@ import { Item } from "./item.ts";
 import { ScaleManager } from "./scaleManager.ts";
 import { DialogManager } from "./dialogManager.ts";
 import { Room } from "./room.ts";
+import { ItemManager } from "./itemManager.ts";
 
 const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
@@ -22,10 +23,11 @@ let world: Container;
 let ui: Container;
 
 let actor: Actor;
-let item: Item;
+let cv: Item;
 
 let dialogManager: DialogManager;
 let scaleManager: ScaleManager;
+let itemManager: ItemManager;
 
 let room: Room;
 
@@ -74,22 +76,32 @@ async function main(): Promise<void> {
   scaleManager.bind(world, ui);
 
   dialogManager = new DialogManager(ui, scaleManager);
+  itemManager = new ItemManager();
 
   world.eventMode = "static";
   world.hitArea = new Rectangle(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
   // Assets
   const backgroundTexture = await Assets.load("/assets/background.png");
-  //const walkMaskTexture = await Assets.load("/assets/walkMask.png");
   const sheet = await Assets.load("/assets/spritesheet.json");
-  const paperTex = await Assets.load("/assets/paper.png");
+  const cvTexture = await Assets.load("/assets/paper.png");
   await Assets.load("/assets/fonts/ByteBounce.ttf");
 
-  // Room handles background sprite internally
+    cv = new Item({
+    stageTexture: cvTexture,
+    inventarTexture: cvTexture,
+    x: 160,
+    y: 95,
+  });
+  itemManager.add("cv", cv);
+
+
   room = new Room({
     background: backgroundTexture,
     walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
     scaleManager: scaleManager,
+    itemManager: itemManager,
+    itemIds: ["cv"],
   });
   room.attach(world);
 
@@ -107,20 +119,12 @@ async function main(): Promise<void> {
     room: room,
   });
 
-  item = new Item({
-    stageTexture: paperTex,
-    inventarTexture: paperTex,
-    x: 160,
-    y: 95,
-  });
-
   world.addChild(actor.view);
-  world.addChild(item.stageView);
 
-  item.stageView.eventMode = "static";
+  cv.stageView.eventMode = "static";
 
   world.on("pointerdown", onWorldPointerDown);
-  item.stageView.on("pointerdown", onItemPointerDown);
+  cv.stageView.on("pointerdown", onItemPointerDown);
 
   scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);
