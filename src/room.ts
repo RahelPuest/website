@@ -1,31 +1,28 @@
 import { Point, Sprite, Texture, Container, Polygon } from "pixi.js";
 import type { ScaleManager } from "./scaleManager";
 import { ItemManager } from "./itemManager";
+import { GameContext } from "./context";
 
 export class Room {
+  private ctx: GameContext;
 
   private background: Texture;
   private walkMask: Polygon;
 
   private backgroundSprite: Sprite;
 
-  private scaleManager: ScaleManager;
-  private itemManager: ItemManager;
-
   private itemIds: string[] = [];
 
   public constructor(opts: {
+    ctx: GameContext;
     background: Texture;
     walkMask: Polygon;
-    scaleManager: ScaleManager;
-    itemManager: ItemManager;
     itemIds: string[];
   }) {
+    this.ctx = opts.ctx;
+
     this.background = opts.background;
     this.walkMask = opts.walkMask;
-
-    this.scaleManager = opts.scaleManager;
-    this.itemManager = opts.itemManager;
 
     this.backgroundSprite = new Sprite(this.background);
 
@@ -38,7 +35,7 @@ export class Room {
     world.addChild(this.backgroundSprite);
 
     this.itemIds.forEach((id) => {
-      const item = this.itemManager.getById(id);
+      const item = this.ctx.itemManager.getById(id);
       if (!item) return;
       world.addChild(item.stageView);
     });
@@ -50,9 +47,7 @@ export class Room {
   }
 
   private refreshView(): void {
-    if (this.scaleManager) {
-      this.scaleManager.fitSpriteContain(this.backgroundSprite);
-    }
+    this.ctx.scaleManager.fitSpriteContain(this.backgroundSprite);
   }
 
   public addItemId(id: string) {

@@ -16,6 +16,8 @@ import { ScaleManager } from "./scaleManager.ts";
 import { DialogManager } from "./dialogManager.ts";
 import { Room } from "./room.ts";
 import { ItemManager } from "./itemManager.ts";
+import { VerbMenu } from "./verbMenu.ts";
+import { GameContext } from "./context.ts";
 
 const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
@@ -35,8 +37,7 @@ let itemManager: ItemManager;
 
 let room: Room;
 
-type Verbs = "look" | "use" | "pickup";
-let currentVerb: Verbs = "pickup"
+let ctx: GameContext;
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
@@ -53,7 +54,7 @@ function onItemPointerDown(e: FederatedPointerEvent): void {
   const item = itemManager.getById(itemId);
   if(item) {
     actor.setTarget(item.interactionPoint.x, item.interactionPoint.y);
-    switch(currentVerb) {
+    switch(ctx.verb) {
       case "look": item.onLook?.(); break;
       case "pickup": item.onPickUp?.(); break;
       case "use": item.onUse?.(); break;
@@ -99,12 +100,23 @@ async function main(): Promise<void> {
   world.eventMode = "static";
   world.hitArea = new Rectangle(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
+  ctx = new GameContext(
+    world,
+    ui,
+    dialogManager,
+    scaleManager,
+    itemManager
+  );
+
   // Assets
   const backgroundTexture = await Assets.load("/assets/background.png");
   const sheet = await Assets.load("/assets/spritesheet.json");
   const cvTexture = await Assets.load("/assets/paper.png");
   const lightSwitchTexture = await Assets.load("/assets/lightSwitch.png")
   await Assets.load("/assets/fonts/ByteBounce.ttf");
+  const eyeIcon = await Assets.load("/assets/eye.png");
+  const handIcon = await Assets.load("/assets/hand.png");
+  const hammerIcon = await Assets.load("/assets/hammer.png");
 
   cv = new Item({
     id: "cv",
@@ -114,10 +126,13 @@ async function main(): Promise<void> {
     y: 95,
     interactionPoint: new Point(150, 95),
     onLook: () => {
-      dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
+      ctx.dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
     },
     onPickUp: () => {
-      dialogManager.addLine(actor, "I will take this.");
+      ctx.dialogManager.addLine(actor, "I will take this.");
+    },
+    onUse: () => {
+      ctx.dialogManager.addLine(actor, "Am I supposed to eat the CV or what?");
     }
   });
   itemManager.add(cv.id, cv);
@@ -130,19 +145,21 @@ async function main(): Promise<void> {
     y: 70,
     interactionPoint: new Point(195, 80),
     onLook: () => {
-      dialogManager.addLine(actor, "A strangely oversized light switch. Weird.");
+      ctx.dialogManager.addLine(actor, "A strangely oversized light switch. Weird.");
     },
     onPickUp: () => {
-      dialogManager.addLine(actor, "The switch is screwed in place. I can't take it with me.");
+      ctx.dialogManager.addLine(actor, "The switch is screwed in place. I can't take it with me.");
+    },
+    onUse: () => {
+      ctx.dialogManager.addLine(actor, "Click!");
     }
   });
   itemManager.add(lightSwitch.id, lightSwitch);
 
   room = new Room({
+    ctx: ctx,
     background: backgroundTexture,
     walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
-    scaleManager: scaleManager,
-    itemManager: itemManager,
     itemIds: ["cv", "lightSwitch"],
   });
   room.attach(world);
@@ -156,8 +173,6 @@ async function main(): Promise<void> {
     speed: 60,
     stopEps: 0.5,
     animationSpeed: 0.15,
-    scaleManager: scaleManager,
-    dialogManager: dialogManager,
     room: room,
   });
 
@@ -175,6 +190,13 @@ async function main(): Promise<void> {
   dialogManager.addLine(actor, "Oh, how did I end up here?");
 
   app.ticker.add(onTick);
+  const verbMenu = new VerbMenu({
+    ctx: ctx,
+    eyeTexture: eyeIcon,
+    handTexture: handIcon,
+    hammerTexture: hammerIcon,
+  });
+  verbMenu.attach(world);
 }
 
 main();

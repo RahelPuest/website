@@ -21,9 +21,6 @@ export class Actor {
 
   private isMoving: boolean = false;
 
-  private scaleManager: ScaleManager;
-  private dialogManager: DialogManager;
-
   private room: Room;
 
   constructor(opts: {
@@ -35,8 +32,6 @@ export class Actor {
     speed?: number;
     stopEps?: number;
     animationSpeed?: number;
-    scaleManager: ScaleManager;
-    dialogManager: DialogManager;
     room: Room; // NEW
   }) {
     const walkAnim = opts.sheet.animations[opts.walkAnimationName];
@@ -61,9 +56,6 @@ export class Actor {
 
     this.speed = opts.speed ?? 400;
     this.stopEps = opts.stopEps ?? 0.5;
-
-    this.scaleManager = opts.scaleManager;
-    this.dialogManager = opts.dialogManager;
 
     this.room = opts.room; // NEW
   }
