@@ -18,6 +18,8 @@ import { Room } from "./room.ts";
 import { ItemManager } from "./itemManager.ts";
 import { VerbMenu } from "./verbMenu.ts";
 import { GameContext } from "./context.ts";
+import { RoomState } from "./roomState.ts";
+import { ItemState } from "./itemState.ts";
 
 const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
@@ -110,18 +112,28 @@ async function main(): Promise<void> {
 
   // Assets
   const backgroundTexture = await Assets.load("/assets/background.png");
+  const nextBackgroundTexture = await Assets.load("/assets/background_next.png");
+
   const sheet = await Assets.load("/assets/spritesheet.json");
   const cvTexture = await Assets.load("/assets/paper.png");
-  const lightSwitchTexture = await Assets.load("/assets/lightSwitch.png")
+  const lightSwitchOffTexture = await Assets.load("/assets/lightSwitch.png");
+  const lightSwitchOnTexture = await Assets.load("/assets/lightSwitch_on.png")
   await Assets.load("/assets/fonts/ByteBounce.ttf");
+  
   const eyeIcon = await Assets.load("/assets/eye.png");
   const handIcon = await Assets.load("/assets/hand.png");
   const hammerIcon = await Assets.load("/assets/hammer.png");
 
-  cv = new Item({
+  const cvState = new ItemState({
     id: "cv",
     stageTexture: cvTexture,
-    inventarTexture: cvTexture,
+    inventarTexture: cvTexture,    
+  })
+
+  cv = new Item({
+    id: "cv",
+    states: [cvState],
+    startState: "cv",
     x: 160,
     y: 95,
     interactionPoint: new Point(150, 95),
@@ -137,10 +149,22 @@ async function main(): Promise<void> {
   });
   itemManager.add(cv.id, cv);
 
+  const lightSwitchOffState = new ItemState({
+    id: "switch_off",
+    stageTexture: lightSwitchOffTexture,
+    inventarTexture: lightSwitchOffTexture,
+  });
+
+  const lightSwitchOnState = new ItemState({
+    id: "switch_on",
+    stageTexture: lightSwitchOnTexture,
+    inventarTexture: lightSwitchOnTexture,
+  });
+
   lightSwitch = new Item({
     id: "lightSwitch",
-    stageTexture: lightSwitchTexture,
-    inventarTexture: lightSwitchTexture,
+    states: [lightSwitchOffState, lightSwitchOnState],
+    startState: "switch_off",
     x: 200,
     y: 70,
     interactionPoint: new Point(195, 80),
@@ -151,16 +175,31 @@ async function main(): Promise<void> {
       ctx.dialogManager.addLine(actor, "The switch is screwed in place. I can't take it with me.");
     },
     onUse: () => {
+      room.setCurrentState("next_state");
       ctx.dialogManager.addLine(actor, "Click!");
+      lightSwitch.setState("switch_on");
     }
   });
   itemManager.add(lightSwitch.id, lightSwitch);
 
-  room = new Room({
-    ctx: ctx,
+  const startRoomState = new RoomState({
+    id: "start_state",
     background: backgroundTexture,
     walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
+    itemIds: ["lightSwitch"],
+  });
+
+  const nextRoomState = new RoomState({
+    id: "next_state",
+    background: nextBackgroundTexture,
+    walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
     itemIds: ["cv", "lightSwitch"],
+  });
+
+  room = new Room({
+    ctx: ctx,
+    states: [startRoomState, nextRoomState],
+    startState: "start_state",
   });
   room.attach(world);
 

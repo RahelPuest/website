@@ -1,6 +1,4 @@
 import { AnimatedSprite, Spritesheet, Texture, Point } from "pixi.js";
-import { ScaleManager } from "./scaleManager";
-import { DialogManager } from "./dialogManager";
 import type { Room } from "./room";
 
 function lerp(a: number, b: number, t: number): number {
@@ -32,7 +30,7 @@ export class Actor {
     speed?: number;
     stopEps?: number;
     animationSpeed?: number;
-    room: Room; // NEW
+    room: Room;
   }) {
     const walkAnim = opts.sheet.animations[opts.walkAnimationName];
     if (!walkAnim) throw new Error(`Animation not found: ${opts.walkAnimationName}`);
@@ -87,11 +85,9 @@ export class Actor {
     const step = this.speed * dtSeconds;
     const t = Math.min(1, step / dist);
 
-    // do the step
     this.view.x = lerp(prevX, this.targetX, t);
     this.view.y = lerp(prevY, this.targetY, t);
 
-    // if step ends in blocked -> rollback and stop
     if (!this.room.isPassable(new Point(this.view.x, this.view.y))) {
       this.view.x = prevX;
       this.view.y = prevY;
