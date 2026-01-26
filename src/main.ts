@@ -8,6 +8,7 @@ import {
   Point,
   FederatedPointerEvent,
   Sprite,
+  insertVersion,
 } from "pixi.js";
 
 import { Actor } from "./actor.ts";
@@ -20,6 +21,7 @@ import { VerbMenu } from "./verbMenu.ts";
 import { GameContext } from "./context.ts";
 import { RoomState } from "./roomState.ts";
 import { ItemState } from "./itemState.ts";
+import { Inventory } from "./inventory.ts";
 
 const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
@@ -142,6 +144,7 @@ async function main(): Promise<void> {
     },
     onPickUp: () => {
       ctx.dialogManager.addLine(actor, "I will take this.");
+      inventory.pick(cv);
     },
     onUse: () => {
       ctx.dialogManager.addLine(actor, "Am I supposed to eat the CV or what?");
@@ -175,9 +178,14 @@ async function main(): Promise<void> {
       ctx.dialogManager.addLine(actor, "The switch is screwed in place. I can't take it with me.");
     },
     onUse: () => {
-      room.setCurrentState("next_state");
+      if(lightSwitch.getStateId() == "switch_off") {
+        room.setCurrentState("next_state");
+        lightSwitch.setState("switch_on");
+      } else {
+        room.setCurrentState("start_state");
+        lightSwitch.setState("switch_off"); 
+      }
       ctx.dialogManager.addLine(actor, "Click!");
-      lightSwitch.setState("switch_on");
     }
   });
   itemManager.add(lightSwitch.id, lightSwitch);
@@ -229,6 +237,7 @@ async function main(): Promise<void> {
   dialogManager.addLine(actor, "Oh, how did I end up here?");
 
   app.ticker.add(onTick);
+
   const verbMenu = new VerbMenu({
     ctx: ctx,
     eyeTexture: eyeIcon,
@@ -236,6 +245,11 @@ async function main(): Promise<void> {
     hammerTexture: hammerIcon,
   });
   verbMenu.attach(world);
+
+  const inventory = new Inventory({
+    ctx: ctx,
+  });
+  inventory.attach(world);
 }
 
 main();
