@@ -4,7 +4,7 @@ import { DialogLine } from "./dialogLine";
 import { ScaleManager } from "./scaleManager";
 
 const DEFAULT_LINE_DURATION_MS = 2000;
-const DEFAULT_VERTICAL_LINE_OFFEST = 172;
+const DEFAULT_VERTICAL_LINE_OFFEST = 256;
 
 export class DialogManager {
   private dialogLines = new Map<Actor, DialogLine[]>();
@@ -18,7 +18,6 @@ export class DialogManager {
 
   public onTick(dtMs: number): void {
     for (const [actor, lines] of this.dialogLines) {
-      // Update all lines
       for (const line of lines) {
         line.update(dtMs);
         if (line.alive) {
@@ -28,7 +27,6 @@ export class DialogManager {
         }
       }
 
-      // Remove expired lines
       const aliveLines = lines.filter((l) => l.alive);
 
       if (aliveLines.length === 0) {

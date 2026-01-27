@@ -21,6 +21,10 @@ export class Actor {
 
   private room: Room;
 
+  private pendingAction: (() => void) | null = null;
+  private pendingX: number = 0;
+  private pendingY: number = 0;
+
   constructor(opts: {
     sheet: Spritesheet;
     walkAnimationName: string;
@@ -55,7 +59,7 @@ export class Actor {
     this.speed = opts.speed ?? 400;
     this.stopEps = opts.stopEps ?? 0.5;
 
-    this.room = opts.room; // NEW
+    this.room = opts.room;
   }
 
   public setTarget(x: number, y: number): void {
@@ -66,49 +70,78 @@ export class Actor {
     else if (x > this.view.x) this.faceRight();
   }
 
+  public setTargetAndThen(x: number, y: number, action: () => void): void {
+    this.pendingX = x;
+    this.pendingY = y;
+    this.pendingAction = action;
+    this.setTarget(x, y);
+  }
+
+  public clearPendingAction(): void {
+    this.pendingAction = null;
+  }
+
   public onTick(dtSeconds: number): void {
-  const dx = this.targetX - this.view.x;
-  const dy = this.targetY - this.view.y;
-  const dist = Math.hypot(dx, dy);
+    const dx = this.targetX - this.view.x;
+    const dy = this.targetY - this.view.y;
+    const dist = Math.hypot(dx, dy);
 
-  const movingNow = dist > this.stopEps;
+    const movingNow = dist > this.stopEps;
 
-  if (movingNow) {
-    if (!this.isMoving) {
-      this.isMoving = true;
-      this.switchToWalk();
+    if (movingNow) {
+      if (!this.isMoving) {
+        this.isMoving = true;
+        this.switchToWalk();
+      }
+
+      const prevX = this.view.x;
+      const prevY = this.view.y;
+
+      const step = this.speed * dtSeconds;
+      const t = Math.min(1, step / dist);
+
+      this.view.x = lerp(prevX, this.targetX, t);
+      this.view.y = lerp(prevY, this.targetY, t);
+
+      if (!this.room.isPassable(new Point(this.view.x, this.view.y))) {
+        this.view.x = prevX;
+        this.view.y = prevY;
+
+        this.targetX = prevX;
+        this.targetY = prevY;
+
+        this.isMoving = false;
+        this.switchToIdle();
+
+        this.clearPendingAction();
+      }
+
+      return;
     }
 
-    const prevX = this.view.x;
-    const prevY = this.view.y;
-
-    const step = this.speed * dtSeconds;
-    const t = Math.min(1, step / dist);
-
-    this.view.x = lerp(prevX, this.targetX, t);
-    this.view.y = lerp(prevY, this.targetY, t);
-
-    if (!this.room.isPassable(new Point(this.view.x, this.view.y))) {
-      this.view.x = prevX;
-      this.view.y = prevY;
-
-      this.targetX = prevX;
-      this.targetY = prevY;
-
+    if (this.isMoving) {
       this.isMoving = false;
       this.switchToIdle();
     }
 
-    return;
+    this.view.position.set(this.targetX, this.targetY);
+
+    this.tryRunPendingAction();
   }
 
-  if (this.isMoving) {
-    this.isMoving = false;
-    this.switchToIdle();
-  }
+  private tryRunPendingAction(): void {
+    if (!this.pendingAction) return;
 
-  this.view.position.set(this.targetX, this.targetY);
-}
+    const dx = this.pendingX - this.view.x;
+    const dy = this.pendingY - this.view.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist <= this.stopEps) {
+      const action = this.pendingAction;
+      this.pendingAction = null;
+      action();
+    }
+  }
 
   private switchToWalk(): void {
     if (this.view.textures !== this.walkTextures) {

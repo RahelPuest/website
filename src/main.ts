@@ -8,7 +8,6 @@ import {
   Point,
   FederatedPointerEvent,
   Sprite,
-  insertVersion,
 } from "pixi.js";
 
 import { Actor } from "./actor.ts";
@@ -48,6 +47,7 @@ function onWindowResize(): void {
 }
 
 function onWorldPointerDown(e: any): void {
+  actor.clearPendingAction();
   const p = world.toLocal(e.global);
   actor.setTarget(p.x, p.y);
 }
@@ -56,14 +56,23 @@ function onItemPointerDown(e: FederatedPointerEvent): void {
   const sprite = e.currentTarget as Sprite;
   const itemId = (sprite as any).__id as string;
   const item = itemManager.getById(itemId);
-  if(item) {
-    actor.setTarget(item.interactionPoint.x, item.interactionPoint.y);
-    switch(ctx.verb) {
-      case "look": item.onLook?.(); break;
-      case "pickup": item.onPickUp?.(); break;
-      case "use": item.onUse?.(); break;
-    }
+
+  if (item) {
+    actor.setTargetAndThen(item.interactionPoint.x, item.interactionPoint.y, () => {
+      switch (ctx.verb) {
+        case "look":
+          item.onLook?.();
+          break;
+        case "pickup":
+          item.onPickUp?.();
+          break;
+        case "use":
+          item.onUse?.();
+          break;
+      }
+    });
   }
+
   e.stopPropagation();
 }
 
@@ -104,24 +113,18 @@ async function main(): Promise<void> {
   world.eventMode = "static";
   world.hitArea = new Rectangle(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
-  ctx = new GameContext(
-    world,
-    ui,
-    dialogManager,
-    scaleManager,
-    itemManager
-  );
+  ctx = new GameContext(world, ui, dialogManager, scaleManager, itemManager);
 
   // Assets
-  const backgroundTexture = await Assets.load("/assets/background.png");
+  const backgroundTexture = await Assets.load("/assets/office_background.png");
   const nextBackgroundTexture = await Assets.load("/assets/background_next.png");
 
   const sheet = await Assets.load("/assets/spritesheet.json");
   const cvTexture = await Assets.load("/assets/paper.png");
   const lightSwitchOffTexture = await Assets.load("/assets/lightSwitch.png");
-  const lightSwitchOnTexture = await Assets.load("/assets/lightSwitch_on.png")
+  const lightSwitchOnTexture = await Assets.load("/assets/lightSwitch_on.png");
   await Assets.load("/assets/fonts/ByteBounce.ttf");
-  
+
   const eyeIcon = await Assets.load("/assets/eye.png");
   const handIcon = await Assets.load("/assets/hand.png");
   const hammerIcon = await Assets.load("/assets/hammer.png");
@@ -129,8 +132,8 @@ async function main(): Promise<void> {
   const cvState = new ItemState({
     id: "cv",
     stageTexture: cvTexture,
-    inventarTexture: cvTexture,    
-  })
+    inventarTexture: cvTexture,
+  });
 
   cv = new Item({
     id: "cv",
@@ -148,7 +151,7 @@ async function main(): Promise<void> {
     },
     onUse: () => {
       ctx.dialogManager.addLine(actor, "Am I supposed to eat the CV or what?");
-    }
+    },
   });
   itemManager.add(cv.id, cv);
 
@@ -168,9 +171,9 @@ async function main(): Promise<void> {
     id: "lightSwitch",
     states: [lightSwitchOffState, lightSwitchOnState],
     startState: "switch_off",
-    x: 200,
+    x: 40,
     y: 70,
-    interactionPoint: new Point(195, 80),
+    interactionPoint: new Point(30, 80),
     onLook: () => {
       ctx.dialogManager.addLine(actor, "A strangely oversized light switch. Weird.");
     },
@@ -178,15 +181,15 @@ async function main(): Promise<void> {
       ctx.dialogManager.addLine(actor, "The switch is screwed in place. I can't take it with me.");
     },
     onUse: () => {
-      if(lightSwitch.getStateId() == "switch_off") {
+      if (lightSwitch.getStateId() == "switch_off") {
         room.setCurrentState("next_state");
         lightSwitch.setState("switch_on");
       } else {
         room.setCurrentState("start_state");
-        lightSwitch.setState("switch_off"); 
+        lightSwitch.setState("switch_off");
       }
       ctx.dialogManager.addLine(actor, "Click!");
-    }
+    },
   });
   itemManager.add(lightSwitch.id, lightSwitch);
 
@@ -234,10 +237,6 @@ async function main(): Promise<void> {
   scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);
 
-  dialogManager.addLine(actor, "Oh, how did I end up here?");
-
-  app.ticker.add(onTick);
-
   const verbMenu = new VerbMenu({
     ctx: ctx,
     eyeTexture: eyeIcon,
@@ -250,6 +249,9 @@ async function main(): Promise<void> {
     ctx: ctx,
   });
   inventory.attach(world);
+
+  dialogManager.addLine(actor, "Oh, how did I end up here?");
+  app.ticker.add(onTick);
 }
 
 main();
