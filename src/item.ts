@@ -14,7 +14,9 @@ export class Item {
   public onUseWith?: (other: Item | null) => void;
 
   private readonly states = new Map<string, ItemState>();
-  private currentStateId: string;
+  private currentStateId: string
+  
+  private scale: number;
 
   public constructor(opts: {
     id: string;
@@ -25,6 +27,8 @@ export class Item {
 
     states: ItemState[];
     startState: string;
+
+    scale: number;
 
     onPickUp?: () => void;
     onLook?: () => void;
@@ -38,6 +42,8 @@ export class Item {
     this.onLook = opts.onLook;
     this.onUse = opts.onUse;
     this.onUseWith = opts.onUseWith;
+
+    this.scale = opts.scale;
 
     if (opts.states.length === 0) {
       throw new Error(`Item ${opts.id} must have at least one state.`);
@@ -57,7 +63,7 @@ export class Item {
 
     this.stageView.anchor.set(0.5);
     this.stageView.position.set(opts.x, opts.y);
-    this.stageView.scale.set(0.5);
+    this.stageView.scale.set(this.scale);
 
     this.stageView.eventMode = "static";
     this.stageView.cursor = "pointer";
