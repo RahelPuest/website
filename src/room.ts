@@ -93,4 +93,8 @@ export class Room {
     if (!s) throw new Error(`RoomState not found: ${id}`);
     return s;
   }
+
+  public getCurrentStateId(): string {
+    return this.currentStateId;
+  }
 }

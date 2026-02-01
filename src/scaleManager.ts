@@ -32,6 +32,14 @@ export class ScaleManager {
     this.ui = ui;
   }
 
+  public get screenWidth(): number {
+    return this.screenW;
+  }
+
+  public get screenHeight(): number {
+    return this.screenH;
+  }
+
   public fitSpriteContain(sprite: Sprite): void {
     const tw = sprite.texture.width;
     const th = sprite.texture.height;
@@ -58,11 +66,7 @@ export class ScaleManager {
     this.screenW = screenW;
     this.screenH = screenH;
 
-    const rawScale = Math.min(
-      this.screenW / this.virtualWidth,
-      this.screenH / this.virtualHeight
-    );
-
+    const rawScale = Math.min(this.screenW / this.virtualWidth, this.screenH / this.virtualHeight);
     this.worldScale = this.useIntegerScaling ? Math.max(1, Math.floor(rawScale)) : rawScale;
 
     const worldPixelW = this.virtualWidth * this.worldScale;
@@ -78,7 +82,6 @@ export class ScaleManager {
     this.world.scale.set(this.worldScale);
     this.world.position.set(this.worldOffsetX, this.worldOffsetY);
 
-    // UI stays in screen coordinates: no scaling, no offset.
     this.ui.scale.set(1);
     this.ui.position.set(0, 0);
   }

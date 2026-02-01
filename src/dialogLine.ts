@@ -1,21 +1,16 @@
-import { Container, Text, Point } from "pixi.js";
+import { Container, Text, Point, TextStyle } from "pixi.js";
 
 export class DialogLine {
   private readonly textView: Text;
   private remainingMs: number;
   private isShown = false;
 
-  constructor(opts: {
-    text: string;
-    x: number;
-    y: number;
-    durationMs: number;
-  }) {
+  constructor(opts: { text: string; x: number; y: number; durationMs: number }) {
     this.remainingMs = opts.durationMs;
 
     this.textView = new Text({
       text: opts.text,
-      style:{ fill: "#00b913", fontSize: 72, fontFamily: "ByteBounce" },
+      style: { fill: "#00b913", fontSize: 72, fontFamily: "ByteBounce" },
     });
 
     this.textView.anchor.set(0.5);
@@ -45,6 +40,13 @@ export class DialogLine {
     this.textView.position.set(x, y);
   }
 
+  public setMaxWidth(maxWidth: number): void {
+    const style = this.textView.style as TextStyle;
+    style.wordWrap = true;
+    style.wordWrapWidth = Math.max(10, maxWidth);
+    this.textView.style = style;
+  }
+
   public get alive(): boolean {
     return this.remainingMs > 0;
   }
@@ -53,4 +55,11 @@ export class DialogLine {
     return this.textView.position;
   }
 
+  public get width(): number {
+    return this.textView.width;
+  }
+
+  public get height(): number {
+    return this.textView.height;
+  }
 }

@@ -39,6 +39,7 @@ let cv: Item;
 let lightSwitch: Item;
 let router: Item;
 let faxMachine: Item;
+let blacklight: Item;
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
@@ -129,6 +130,7 @@ async function main(): Promise<void> {
   lightSwitch = scene.items.lightSwitch;
   router = scene.items.router;
   faxMachine = scene.items.faxMachine;
+  blacklight = scene.items.blacklight;
 
   world.on("pointerdown", onWorldPointerDown);
   cv.stageView.on("pointerdown", onItemPointerDown);
@@ -136,7 +138,8 @@ async function main(): Promise<void> {
   lightSwitch.stageView.on("pointerdown", onItemPointerDown);
   router.stageView.on("pointerdown", onItemPointerDown);
   faxMachine.stageView.on("pointerdown", onItemPointerDown);
-  
+  blacklight.stageView.on("pointerdown", onItemPointerDown);
+
   scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);
 

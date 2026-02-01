@@ -20,6 +20,7 @@ export type OfficeScene = {
     lightSwitch: Item;
     router: Item;
     faxMachine: Item;
+    blacklight: Item;
   };
 };
 
@@ -36,8 +37,9 @@ export async function createOfficeScene(opts: {
   const { ctx, world, itemManager, virtualWidth, virtualHeight } = opts;
 
   // Assets
-  const backgroundTexture = await Assets.load("/assets/office_background.png");
-  const nextBackgroundTexture = await Assets.load("/assets/background_next.png");
+  const officeTexture = await Assets.load("/assets/office_background.png");
+  const darkOfficeTexture = await Assets.load("/assets/office_background_dark.png");
+  const blacklightOfficeTexture = await Assets.load("/assets/office_background_blacklight.png");
 
   const sheet = await Assets.load("/assets/spritesheet.json");
 
@@ -54,6 +56,8 @@ export async function createOfficeScene(opts: {
   const faxMachinePrinting02Texture = await Assets.load("/assets/fax_on_paper_02.png");
   const faxMachinePrinting03Texture = await Assets.load("/assets/fax_on_paper_03.png");
   const faxMachineIdleTexture = await Assets.load("/assets/fax_on_idle.png");
+
+  const blacklightTexture = await Assets.load("/assets/blacklight.png");
 
   await Assets.load("/assets/fonts/ByteBounce.ttf");
 
@@ -119,7 +123,7 @@ export async function createOfficeScene(opts: {
     },
     onUse: () => {
       if (lightSwitch.getStateId() === "switch_off") {
-        room.setCurrentState("next_state");
+        room.setCurrentState("dark_state");
         lightSwitch.setState("switch_on");
       } else {
         room.setCurrentState("start_state");
@@ -192,24 +196,24 @@ export async function createOfficeScene(opts: {
     id: "faxMachine",
     states: [faxMachineOffState, faxMachineOnState, faxMachinePrintingState],
     startState: "fax_off",
-    x: 200,
+    x: 190,
     y: 80,
     scale: 1,
-    interactionPoint: new Point(185, 85),
+    interactionPoint: new Point(175, 85),
     onLook: () => {
         if (faxMachine.getStateId() === "fax_off") {
-            ctx.dialogManager.addLine(actor, "A fax machine thats not connected. Who even uses those anymore?");
+            ctx.dialogManager.addLine(actor, "The fax machine is not connected. Who even uses those anymore?");
         } 
         if (faxMachine.getStateId() === "fax_on") {
-            ctx.dialogManager.addLine(actor, "It's connected now. Seems like there is a fax incoming.");
+            ctx.dialogManager.addLine(actor, "It's connected now. Seems like there is a pending fax.");
         }
         if (faxMachine.getStateId() === "fax_printing") {
-            ctx.dialogManager.addLine(actor, "The fax machine is printing the incoming fax.");
+            ctx.dialogManager.addLine(actor, "The fax machine is printing.");
         }
     },
     onPickUp: () => {
         if (!faxPrinted) {
-            ctx.dialogManager.addLine(actor, "I don't need to take the fax machine with me.");
+            ctx.dialogManager.addLine(actor, "Why should i carry a fax machine with me?");
         } else {
             ctx.dialogManager.addLine(actor, "I should take the printed fax with me.");
             inventory.pick(cv);
@@ -239,25 +243,69 @@ export async function createOfficeScene(opts: {
   });
   itemManager.add(faxMachine.id, faxMachine);
 
+  const blacklightState = new ItemState({
+    id: "blacklight",
+    stageTexture: blacklightTexture,
+    inventarTexture: blacklightTexture,
+  });
+
+    const blacklight = new Item({
+    id: "blacklight",
+    states: [blacklightState],
+    startState: "blacklight",
+    x: 150,
+    y: 110,
+    scale: 1.0,
+    interactionPoint: new Point(150, 110),
+    onLook: () => {
+      ctx.dialogManager.addLine(actor, "A blacklight. I wonder what I could use this for?");
+    },
+    onPickUp: () => {
+        if( room.getCurrentStateId() === "start_state") {
+            ctx.dialogManager.addLine(actor, "I will take the blacklight with me.");
+            inventory.pick(blacklight);
+        }
+    },
+    onUse: () => {
+        if (room.getCurrentStateId() === "start_state") {
+            ctx.dialogManager.addLine(actor, "Its too bright to see anything with the blacklight.");
+        }
+        if (room.getCurrentStateId() === "dark_state") {
+            ctx.dialogManager.addLine(actor, "What?! Wo uses blacklight colored ink to hide a password? Psycho!");
+            room.setCurrentState("blacklight_state");
+            setTimeout(() => {
+                room.setCurrentState("dark_state");
+            }, 3000);
+        }
+    },
+  });
+  itemManager.add(blacklight.id, blacklight);
+
   // Room States danach
   const startRoomState = new RoomState({
     id: "start_state",
-    background: backgroundTexture,
+    background: officeTexture,
     walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
-    itemIds: ["lightSwitch", "router", "faxMachine"],
+    itemIds: ["lightSwitch", "router", "faxMachine", "blacklight"],
   });
 
-  const nextRoomState = new RoomState({
-    id: "next_state",
-    background: nextBackgroundTexture,
+  const darkRoomState = new RoomState({
+    id: "dark_state",
+    background: darkOfficeTexture,
     walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
-    itemIds: ["cv", "lightSwitch"],
+    itemIds: ["lightSwitch"],
   });
 
-  // Room jetzt erstellen und attachen, Items sind schon im Manager
+  const blackRoomState = new RoomState({
+    id: "blacklight_state",
+    background: blacklightOfficeTexture,
+    walkMask: new Polygon([0, 0, 0, 0, 0, 0, 0, 0]),
+    itemIds: ["lightSwitch"],
+  });
+
   room = new Room({
     ctx,
-    states: [startRoomState, nextRoomState],
+    states: [startRoomState, darkRoomState, blackRoomState],
     startState: "start_state",
   });
   room.attach(world);
@@ -294,6 +342,6 @@ export async function createOfficeScene(opts: {
     room,
     inventory,
     verbMenu,
-    items: { cv, lightSwitch, router, faxMachine },
+    items: { cv, lightSwitch, router, faxMachine, blacklight },
   };
 }
