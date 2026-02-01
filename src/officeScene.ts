@@ -21,10 +21,13 @@ export type OfficeScene = {
     router: Item;
     faxMachine: Item;
     blacklight: Item;
+    bag: Item;
   };
 };
 
 let faxPrinted = false;
+let pinSeen = false;
+let bagOpened = false;
 
 export async function createOfficeScene(opts: {
   ctx: GameContext;
@@ -56,6 +59,10 @@ export async function createOfficeScene(opts: {
   const faxMachinePrinting02Texture = await Assets.load("/assets/fax_on_paper_02.png");
   const faxMachinePrinting03Texture = await Assets.load("/assets/fax_on_paper_03.png");
   const faxMachineIdleTexture = await Assets.load("/assets/fax_on_idle.png");
+
+  const bagClosedTexture = await Assets.load("/assets/bag_closed.png");
+  const bagOpenTexture = await Assets.load("/assets/bag_open.png");
+  const bagEmptyTexture = await Assets.load("/assets/bag_empty.png");
 
   const blacklightTexture = await Assets.load("/assets/blacklight.png");
 
@@ -275,18 +282,67 @@ export async function createOfficeScene(opts: {
             room.setCurrentState("blacklight_state");
             setTimeout(() => {
                 room.setCurrentState("dark_state");
+                pinSeen = true;
             }, 3000);
         }
     },
   });
   itemManager.add(blacklight.id, blacklight);
 
+  const bagClosedState = new ItemState({
+    id: "bag_closed",
+    stageTexture: bagClosedTexture,
+    inventarTexture: bagClosedTexture,
+  });
+  
+  const bagOpenState = new ItemState({
+    id: "bag_open",
+    stageTexture: bagOpenTexture,
+    inventarTexture: bagOpenTexture,
+  });
+
+  const bagEmptyState = new ItemState({
+    id: "bag_empty",
+    stageTexture: bagEmptyTexture,
+    inventarTexture: bagEmptyTexture,
+  });
+
+  const bag = new Item({
+    id: "bag",
+    states: [bagClosedState, bagOpenState, bagEmptyState],
+    startState: "bag_closed",
+    x: 58,
+    y: 84,
+    scale: 1.0,
+    interactionPoint: new Point(60, 100),
+    onLook: () => {
+      ctx.dialogManager.addLine(actor, "My old document case. Guess who forgot the pin code?");
+    },
+    onPickUp: () => {
+        if (!bagOpened) {
+            ctx.dialogManager.addLine(actor, "The bag is locked. I need to open it first.");
+        } else {
+            ctx.dialogManager.addLine(actor, "I will take the documents with me.");
+        }  
+    },
+    onUse: () => {
+        if (!pinSeen) {
+            ctx.dialogManager.addLine(actor, "Nah, i wont guess the pin code.");
+        } else {
+            bag.setState("bag_open");
+            ctx.dialogManager.addLine(actor, "The bag is now open. Maybe I should take the documents with me.");
+            bagOpened = true;
+        }
+    },
+  });
+  itemManager.add(bag.id, bag);
+
   // Room States danach
   const startRoomState = new RoomState({
     id: "start_state",
     background: officeTexture,
     walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
-    itemIds: ["lightSwitch", "router", "faxMachine", "blacklight"],
+    itemIds: ["lightSwitch", "router", "faxMachine", "blacklight", "bag"],
   });
 
   const darkRoomState = new RoomState({
@@ -342,6 +398,6 @@ export async function createOfficeScene(opts: {
     room,
     inventory,
     verbMenu,
-    items: { cv, lightSwitch, router, faxMachine, blacklight },
+    items: { cv, lightSwitch, router, faxMachine, blacklight, bag },
   };
 }

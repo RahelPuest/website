@@ -1,6 +1,5 @@
 import {
   Application,
-  Assets,
   Container,
   Rectangle,
   TextureStyle,
@@ -40,6 +39,7 @@ let lightSwitch: Item;
 let router: Item;
 let faxMachine: Item;
 let blacklight: Item;
+let bag: Item;
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
@@ -131,6 +131,7 @@ async function main(): Promise<void> {
   router = scene.items.router;
   faxMachine = scene.items.faxMachine;
   blacklight = scene.items.blacklight;
+  bag = scene.items.bag;
 
   world.on("pointerdown", onWorldPointerDown);
   cv.stageView.on("pointerdown", onItemPointerDown);
@@ -139,6 +140,7 @@ async function main(): Promise<void> {
   router.stageView.on("pointerdown", onItemPointerDown);
   faxMachine.stageView.on("pointerdown", onItemPointerDown);
   blacklight.stageView.on("pointerdown", onItemPointerDown);
+  bag.stageView.on("pointerdown", onItemPointerDown);
 
   scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);
