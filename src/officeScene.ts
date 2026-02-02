@@ -39,47 +39,47 @@ export async function createOfficeScene(opts: {
 }): Promise<OfficeScene> {
   const { ctx, world, itemManager, virtualWidth, virtualHeight } = opts;
 
-  const officeTexture = await Assets.load("/assets/office_background.png");
+  const officeTexture = await Assets.load("assets/office_background.png");
   const darkOfficeTexture = await Assets.load(
-    "/assets/office_background_dark.png",
+    "assets/office_background_dark.png",
   );
   const blacklightOfficeTexture = await Assets.load(
-    "/assets/office_background_blacklight.png",
+    "assets/office_background_blacklight.png",
   );
 
-  const sheet = await Assets.load("/assets/spritesheet.json");
+  const sheet = await Assets.load("assets/spritesheet.json");
 
-  const cvTexture = await Assets.load("/assets/paper.png");
-  const lightSwitchOffTexture = await Assets.load("/assets/lightSwitch.png");
-  const lightSwitchOnTexture = await Assets.load("/assets/lightSwitch_on.png");
+  const cvTexture = await Assets.load("assets/paper.png");
+  const lightSwitchOffTexture = await Assets.load("assets/lightSwitch.png");
+  const lightSwitchOnTexture = await Assets.load("assets/lightSwitch_on.png");
 
-  const routerOffTexture = await Assets.load("/assets/router_off.png");
-  const routerOnTexture = await Assets.load("/assets/router_on.png");
+  const routerOffTexture = await Assets.load("assets/router_off.png");
+  const routerOnTexture = await Assets.load("assets/router_on.png");
 
-  const faxMachineOffTexture = await Assets.load("/assets/fax_off.png");
-  const faxMachineOnTexture = await Assets.load("/assets/fax_on.png");
+  const faxMachineOffTexture = await Assets.load("assets/fax_off.png");
+  const faxMachineOnTexture = await Assets.load("assets/fax_on.png");
   const faxMachinePrinting01Texture = await Assets.load(
-    "/assets/fax_on_paper_01.png",
+    "assets/fax_on_paper_01.png",
   );
   const faxMachinePrinting02Texture = await Assets.load(
-    "/assets/fax_on_paper_02.png",
+    "assets/fax_on_paper_02.png",
   );
   const faxMachinePrinting03Texture = await Assets.load(
-    "/assets/fax_on_paper_03.png",
+    "assets/fax_on_paper_03.png",
   );
-  const faxMachineIdleTexture = await Assets.load("/assets/fax_on_idle.png");
+  const faxMachineIdleTexture = await Assets.load("assets/fax_on_idle.png");
 
-  const bagClosedTexture = await Assets.load("/assets/bag_closed.png");
-  const bagOpenTexture = await Assets.load("/assets/bag_open.png");
-  const bagEmptyTexture = await Assets.load("/assets/bag_empty.png");
+  const bagClosedTexture = await Assets.load("assets/bag_closed.png");
+  const bagOpenTexture = await Assets.load("assets/bag_open.png");
+  const bagEmptyTexture = await Assets.load("assets/bag_empty.png");
 
-  const blacklightTexture = await Assets.load("/assets/blacklight.png");
+  const blacklightTexture = await Assets.load("assets/blacklight.png");
 
-  await Assets.load("/assets/fonts/ByteBounce.ttf");
+  await Assets.load("assets/fonts/ByteBounce.ttf");
 
-  const eyeIcon = await Assets.load("/assets/eye.png");
-  const handIcon = await Assets.load("/assets/hand.png");
-  const hammerIcon = await Assets.load("/assets/hammer.png");
+  const eyeIcon = await Assets.load("assets/eye.png");
+  const handIcon = await Assets.load("assets/hand.png");
+  const hammerIcon = await Assets.load("assets/hammer.png");
 
   const refs = {
     actor: null as Actor | null,
