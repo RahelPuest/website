@@ -37,10 +37,12 @@ export class Actor {
     room: Room;
   }) {
     const walkAnim = opts.sheet.animations[opts.walkAnimationName];
-    if (!walkAnim) throw new Error(`Animation not found: ${opts.walkAnimationName}`);
+    if (!walkAnim)
+      throw new Error(`Animation not found: ${opts.walkAnimationName}`);
 
     const idleAnim = opts.sheet.animations[opts.idleAnimationName];
-    if (!idleAnim) throw new Error(`Animation not found: ${opts.idleAnimationName}`);
+    if (!idleAnim)
+      throw new Error(`Animation not found: ${opts.idleAnimationName}`);
 
     this.walkTextures = walkAnim;
     this.idleTextures = idleAnim;

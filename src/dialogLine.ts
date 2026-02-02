@@ -5,7 +5,12 @@ export class DialogLine {
   private remainingMs: number;
   private isShown = false;
 
-  constructor(opts: { text: string; x: number; y: number; durationMs: number }) {
+  constructor(opts: {
+    text: string;
+    x: number;
+    y: number;
+    durationMs: number;
+  }) {
     this.remainingMs = opts.durationMs;
 
     this.textView = new Text({

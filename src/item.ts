@@ -1,6 +1,8 @@
 import { Sprite, Point } from "pixi.js";
 import { ItemState } from "./itemState";
 
+type SpriteWithId = Sprite & { __id?: string };
+
 export class Item {
   public readonly stageView: Sprite;
   public readonly inventarView: Sprite;
@@ -14,8 +16,8 @@ export class Item {
   public onUseWith?: (other: Item | null) => void;
 
   private readonly states = new Map<string, ItemState>();
-  private currentStateId: string
-  
+  private currentStateId: string;
+
   private scale: number;
 
   public constructor(opts: {
@@ -57,7 +59,7 @@ export class Item {
     this.currentStateId = start.id;
 
     this.stageView = new Sprite(start.stageTexture);
-    (this.stageView as any).__id = this.id;
+    (this.stageView as SpriteWithId).__id = this.id;
 
     this.inventarView = new Sprite(start.inventarTexture);
 

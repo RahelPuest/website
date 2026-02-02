@@ -11,7 +11,6 @@ import { Actor } from "./actor";
 import { Item } from "./item";
 import { ScaleManager } from "./scaleManager";
 import { DialogManager } from "./dialogManager";
-import { Room } from "./room";
 import { ItemManager } from "./itemManager";
 import { GameContext } from "./context";
 
@@ -21,12 +20,13 @@ const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
 const USE_INTEGER_SCALING = false;
 
+type SpriteWithId = Sprite & { __id?: string };
+
 let app: Application;
 let world: Container;
 let ui: Container;
 
 let actor: Actor;
-let room: Room;
 
 let dialogManager: DialogManager;
 let scaleManager: ScaleManager;
@@ -45,37 +45,46 @@ function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
 }
 
-function onWorldPointerDown(e: any): void {
+function onWorldPointerDown(e: FederatedPointerEvent): void {
   actor.clearPendingAction();
   const p = world.toLocal(e.global);
   actor.setTarget(p.x, p.y);
 }
 
 function onItemPointerDown(e: FederatedPointerEvent): void {
-  const sprite = e.currentTarget as Sprite;
-  const itemId = (sprite as any).__id as string;
+  const sprite = e.currentTarget as SpriteWithId;
+  const itemId = sprite.__id;
+  if (!itemId) {
+    e.stopPropagation();
+    return;
+  }
+
   const item = itemManager.getById(itemId);
 
   if (item) {
-    actor.setTargetAndThen(item.interactionPoint.x, item.interactionPoint.y, () => {
-      switch (ctx.verb) {
-        case "look":
-          item.onLook?.();
-          break;
-        case "pickup":
-          item.onPickUp?.();
-          break;
-        case "use":
-          item.onUse?.();
-          break;
-      }
-    });
+    actor.setTargetAndThen(
+      item.interactionPoint.x,
+      item.interactionPoint.y,
+      () => {
+        switch (ctx.verb) {
+          case "look":
+            item.onLook?.();
+            break;
+          case "pickup":
+            item.onPickUp?.();
+            break;
+          case "use":
+            item.onUse?.();
+            break;
+        }
+      },
+    );
   }
 
   e.stopPropagation();
 }
 
-function onTick(time: any): void {
+function onTick(time: { deltaMS: number }): void {
   actor.onTick(time.deltaMS / 1000);
   dialogManager.onTick(time.deltaMS);
 }
@@ -124,7 +133,6 @@ async function main(): Promise<void> {
   });
 
   actor = scene.actor;
-  room = scene.room;
 
   cv = scene.items.cv;
   lightSwitch = scene.items.lightSwitch;
@@ -134,8 +142,8 @@ async function main(): Promise<void> {
   bag = scene.items.bag;
 
   world.on("pointerdown", onWorldPointerDown);
-  cv.stageView.on("pointerdown", onItemPointerDown);
 
+  cv.stageView.on("pointerdown", onItemPointerDown);
   lightSwitch.stageView.on("pointerdown", onItemPointerDown);
   router.stageView.on("pointerdown", onItemPointerDown);
   faxMachine.stageView.on("pointerdown", onItemPointerDown);

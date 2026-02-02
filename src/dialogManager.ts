@@ -48,7 +48,9 @@ export class DialogManager {
 
     line.show(this.ui);
 
-    const maxW = Math.floor(this.scaleManager.screenWidth * WRAP_SCREEN_FRACTION);
+    const maxW = Math.floor(
+      this.scaleManager.screenWidth * WRAP_SCREEN_FRACTION,
+    );
     if (maxW > 0) {
       line.setMaxWidth(maxW);
     }

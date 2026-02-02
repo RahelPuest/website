@@ -39,10 +39,13 @@ export async function createOfficeScene(opts: {
 }): Promise<OfficeScene> {
   const { ctx, world, itemManager, virtualWidth, virtualHeight } = opts;
 
-  // Assets
   const officeTexture = await Assets.load("/assets/office_background.png");
-  const darkOfficeTexture = await Assets.load("/assets/office_background_dark.png");
-  const blacklightOfficeTexture = await Assets.load("/assets/office_background_blacklight.png");
+  const darkOfficeTexture = await Assets.load(
+    "/assets/office_background_dark.png",
+  );
+  const blacklightOfficeTexture = await Assets.load(
+    "/assets/office_background_blacklight.png",
+  );
 
   const sheet = await Assets.load("/assets/spritesheet.json");
 
@@ -55,9 +58,15 @@ export async function createOfficeScene(opts: {
 
   const faxMachineOffTexture = await Assets.load("/assets/fax_off.png");
   const faxMachineOnTexture = await Assets.load("/assets/fax_on.png");
-  const faxMachinePrinting01Texture = await Assets.load("/assets/fax_on_paper_01.png");
-  const faxMachinePrinting02Texture = await Assets.load("/assets/fax_on_paper_02.png");
-  const faxMachinePrinting03Texture = await Assets.load("/assets/fax_on_paper_03.png");
+  const faxMachinePrinting01Texture = await Assets.load(
+    "/assets/fax_on_paper_01.png",
+  );
+  const faxMachinePrinting02Texture = await Assets.load(
+    "/assets/fax_on_paper_02.png",
+  );
+  const faxMachinePrinting03Texture = await Assets.load(
+    "/assets/fax_on_paper_03.png",
+  );
   const faxMachineIdleTexture = await Assets.load("/assets/fax_on_idle.png");
 
   const bagClosedTexture = await Assets.load("/assets/bag_closed.png");
@@ -72,8 +81,18 @@ export async function createOfficeScene(opts: {
   const handIcon = await Assets.load("/assets/hand.png");
   const hammerIcon = await Assets.load("/assets/hammer.png");
 
-  let actor!: Actor;
-  let room!: Room;
+  const refs = {
+    actor: null as Actor | null,
+    room: null as Room | null,
+  };
+
+  const inventory = new Inventory({ ctx });
+  const verbMenu = new VerbMenu({
+    ctx,
+    eyeTexture: eyeIcon,
+    handTexture: handIcon,
+    hammerTexture: hammerIcon,
+  });
 
   const cvState = new ItemState({
     id: "cv",
@@ -90,96 +109,23 @@ export async function createOfficeScene(opts: {
     scale: 0.5,
     interactionPoint: new Point(150, 95),
     onLook: () => {
-      ctx.dialogManager.addLine(actor, "This Rahel person seems pretty awesome!");
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(a, "This Rahel person seems pretty awesome!");
     },
     onPickUp: () => {
-      ctx.dialogManager.addLine(actor, "I will take this.");
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(a, "I will take this.");
       inventory.pick(cv);
     },
     onUse: () => {
-      ctx.dialogManager.addLine(actor, "Am I supposed to eat the CV or what?");
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(a, "Am I supposed to eat the CV or what?");
     },
   });
   itemManager.add(cv.id, cv);
-
-  const lightSwitchOffState = new ItemState({
-    id: "switch_off",
-    stageTexture: lightSwitchOffTexture,
-    inventarTexture: lightSwitchOffTexture,
-  });
-
-  const lightSwitchOnState = new ItemState({
-    id: "switch_on",
-    stageTexture: lightSwitchOnTexture,
-    inventarTexture: lightSwitchOnTexture,
-  });
-
-  const lightSwitch = new Item({
-    id: "lightSwitch",
-    states: [lightSwitchOffState, lightSwitchOnState],
-    startState: "switch_off",
-    x: 40,
-    y: 70,
-    scale: 0.5,
-    interactionPoint: new Point(30, 80),
-    onLook: () => {
-      ctx.dialogManager.addLine(actor, "A strangely oversized light switch. Weird.");
-    },
-    onPickUp: () => {
-      ctx.dialogManager.addLine(actor, "The switch is screwed in place. I can't take it with me.");
-    },
-    onUse: () => {
-      if (lightSwitch.getStateId() === "switch_off") {
-        room.setCurrentState("dark_state");
-        lightSwitch.setState("switch_on");
-      } else {
-        room.setCurrentState("start_state");
-        lightSwitch.setState("switch_off");
-      }
-      ctx.dialogManager.addLine(actor, "Click!");
-    },
-  });
-  itemManager.add(lightSwitch.id, lightSwitch);
-
-  const routerOffState = new ItemState({
-    id: "router_off",
-    stageTexture: routerOffTexture,
-    inventarTexture: routerOffTexture,
-  });
-
-  const routerOnState = new ItemState({
-    id: "router_on",
-    stageTexture: routerOnTexture,
-    inventarTexture: routerOnTexture,
-  });
-
-  const router = new Item({
-    id: "router",
-    states: [routerOffState, routerOnState],
-    startState: "router_off",
-    x: 220,
-    y: 80,
-    scale: 1,
-    interactionPoint: new Point(210, 80),
-    onLook: () => {
-      ctx.dialogManager.addLine(actor, "A Wi-Fi router. It seems to be off.");
-    },
-    onPickUp: () => {
-      ctx.dialogManager.addLine(actor, "I don't need to take the router with me.");
-    },
-    onUse: () => {
-      if (router.getStateId() === "router_off") {
-        router.setState("router_on");
-        ctx.dialogManager.addLine(actor, "The router is now on. I hope there's internet!");
-        faxMachine.setState("fax_on");
-      } else {
-        router.setState("router_off");
-        ctx.dialogManager.addLine(actor, "I turned the router off.");
-        faxMachine.setState("fax_off");
-      }
-    },
-  });
-  itemManager.add(router.id, router);
 
   const faxMachineOffState = new ItemState({
     id: "fax_off",
@@ -208,47 +154,176 @@ export async function createOfficeScene(opts: {
     scale: 1,
     interactionPoint: new Point(175, 85),
     onLook: () => {
-        if (faxMachine.getStateId() === "fax_off") {
-            ctx.dialogManager.addLine(actor, "The fax machine is not connected. Who even uses those anymore?");
-        } 
-        if (faxMachine.getStateId() === "fax_on") {
-            ctx.dialogManager.addLine(actor, "It's connected now. Seems like there is a pending fax.");
-        }
-        if (faxMachine.getStateId() === "fax_printing") {
-            ctx.dialogManager.addLine(actor, "The fax machine is printing.");
-        }
+      const a = refs.actor;
+      if (!a) return;
+
+      if (faxMachine.getStateId() === "fax_off") {
+        ctx.dialogManager.addLine(
+          a,
+          "The fax machine is not connected. Who even uses those anymore?",
+        );
+      } else if (faxMachine.getStateId() === "fax_on") {
+        ctx.dialogManager.addLine(
+          a,
+          "It's connected now. Seems like there is a pending fax.",
+        );
+      } else if (faxMachine.getStateId() === "fax_printing") {
+        ctx.dialogManager.addLine(a, "The fax machine is printing.");
+      }
     },
     onPickUp: () => {
-        if (!faxPrinted) {
-            ctx.dialogManager.addLine(actor, "Why should i carry a fax machine with me?");
-        } else {
-            ctx.dialogManager.addLine(actor, "I should take the printed fax with me.");
-            inventory.pick(cv);
-            faxMachine.stageView.texture = faxMachineIdleTexture;
-        }
+      const a = refs.actor;
+      if (!a) return;
+
+      if (!faxPrinted) {
+        ctx.dialogManager.addLine(
+          a,
+          "Why should i carry a fax machine with me?",
+        );
+      } else {
+        ctx.dialogManager.addLine(a, "I should take the printed fax with me.");
+        inventory.pick(cv);
+        faxMachine.stageView.texture = faxMachineIdleTexture;
+      }
     },
     onUse: () => {
+      const a = refs.actor;
+      if (!a) return;
+
       if (faxMachine.getStateId() === "fax_off") {
         faxMachine.setState("fax_on");
-        ctx.dialogManager.addLine(actor, "Nothing happens. Its still not connected.");
-      } 
+        ctx.dialogManager.addLine(
+          a,
+          "Nothing happens. Its still not connected.",
+        );
+        return;
+      }
+
       if (faxMachine.getStateId() === "fax_on") {
-        ctx.dialogManager.addLine(actor, "Ohhhh it's printing.");
+        ctx.dialogManager.addLine(a, "Ohhhh it's printing.");
         faxMachine.setState("fax_printing");
+
         setTimeout(() => {
-            faxMachine.stageView.texture = faxMachinePrinting02Texture;
+          faxMachine.stageView.texture = faxMachinePrinting02Texture;
         }, 500);
+
         setTimeout(() => {
-            faxMachine.stageView.texture = faxMachinePrinting03Texture;
+          faxMachine.stageView.texture = faxMachinePrinting03Texture;
         }, 1500);
+
         setTimeout(() => {
-            ctx.dialogManager.addLine(actor, "Whoa!");
-            faxPrinted = true;
+          const a2 = refs.actor;
+          if (!a2) return;
+          ctx.dialogManager.addLine(a2, "Whoa!");
+          faxPrinted = true;
         }, 2000);
       }
     },
   });
   itemManager.add(faxMachine.id, faxMachine);
+
+  const routerOffState = new ItemState({
+    id: "router_off",
+    stageTexture: routerOffTexture,
+    inventarTexture: routerOffTexture,
+  });
+
+  const routerOnState = new ItemState({
+    id: "router_on",
+    stageTexture: routerOnTexture,
+    inventarTexture: routerOnTexture,
+  });
+
+  const router = new Item({
+    id: "router",
+    states: [routerOffState, routerOnState],
+    startState: "router_off",
+    x: 220,
+    y: 80,
+    scale: 1,
+    interactionPoint: new Point(210, 80),
+    onLook: () => {
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(a, "A Wi-Fi router. It seems to be off.");
+    },
+    onPickUp: () => {
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(a, "I don't need to take the router with me.");
+    },
+    onUse: () => {
+      const a = refs.actor;
+      if (!a) return;
+
+      if (router.getStateId() === "router_off") {
+        router.setState("router_on");
+        ctx.dialogManager.addLine(
+          a,
+          "The router is now on. I hope there's internet!",
+        );
+        faxMachine.setState("fax_on");
+      } else {
+        router.setState("router_off");
+        ctx.dialogManager.addLine(a, "I turned the router off.");
+        faxMachine.setState("fax_off");
+      }
+    },
+  });
+  itemManager.add(router.id, router);
+
+  const lightSwitchOffState = new ItemState({
+    id: "switch_off",
+    stageTexture: lightSwitchOffTexture,
+    inventarTexture: lightSwitchOffTexture,
+  });
+
+  const lightSwitchOnState = new ItemState({
+    id: "switch_on",
+    stageTexture: lightSwitchOnTexture,
+    inventarTexture: lightSwitchOnTexture,
+  });
+
+  const lightSwitch = new Item({
+    id: "lightSwitch",
+    states: [lightSwitchOffState, lightSwitchOnState],
+    startState: "switch_off",
+    x: 40,
+    y: 70,
+    scale: 0.5,
+    interactionPoint: new Point(30, 80),
+    onLook: () => {
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(
+        a,
+        "A strangely oversized light switch. Weird.",
+      );
+    },
+    onPickUp: () => {
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(
+        a,
+        "The switch is screwed in place. I can't take it with me.",
+      );
+    },
+    onUse: () => {
+      const a = refs.actor;
+      const r = refs.room;
+      if (!a || !r) return;
+
+      if (lightSwitch.getStateId() === "switch_off") {
+        r.setCurrentState("dark_state");
+        lightSwitch.setState("switch_on");
+      } else {
+        r.setCurrentState("start_state");
+        lightSwitch.setState("switch_off");
+      }
+      ctx.dialogManager.addLine(a, "Click!");
+    },
+  });
+  itemManager.add(lightSwitch.id, lightSwitch);
 
   const blacklightState = new ItemState({
     id: "blacklight",
@@ -256,7 +331,7 @@ export async function createOfficeScene(opts: {
     inventarTexture: blacklightTexture,
   });
 
-    const blacklight = new Item({
+  const blacklight = new Item({
     id: "blacklight",
     states: [blacklightState],
     startState: "blacklight",
@@ -265,26 +340,46 @@ export async function createOfficeScene(opts: {
     scale: 1.0,
     interactionPoint: new Point(150, 110),
     onLook: () => {
-      ctx.dialogManager.addLine(actor, "A blacklight. I wonder what I could use this for?");
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(
+        a,
+        "A blacklight. I wonder what I could use this for?",
+      );
     },
     onPickUp: () => {
-        if( room.getCurrentStateId() === "start_state") {
-            ctx.dialogManager.addLine(actor, "I will take the blacklight with me.");
-            inventory.pick(blacklight);
-        }
+      const a = refs.actor;
+      const r = refs.room;
+      if (!a || !r) return;
+
+      if (r.getCurrentStateId() === "start_state") {
+        ctx.dialogManager.addLine(a, "I will take the blacklight with me.");
+        inventory.pick(blacklight);
+      }
     },
     onUse: () => {
-        if (room.getCurrentStateId() === "start_state") {
-            ctx.dialogManager.addLine(actor, "Its too bright to see anything with the blacklight.");
-        }
-        if (room.getCurrentStateId() === "dark_state") {
-            ctx.dialogManager.addLine(actor, "What?! Wo uses blacklight colored ink to hide a password? Psycho!");
-            room.setCurrentState("blacklight_state");
-            setTimeout(() => {
-                room.setCurrentState("dark_state");
-                pinSeen = true;
-            }, 3000);
-        }
+      const a = refs.actor;
+      const r = refs.room;
+      if (!a || !r) return;
+
+      if (r.getCurrentStateId() === "start_state") {
+        ctx.dialogManager.addLine(
+          a,
+          "Its too bright to see anything with the blacklight.",
+        );
+      } else if (r.getCurrentStateId() === "dark_state") {
+        ctx.dialogManager.addLine(
+          a,
+          "What?! Wo uses blacklight colored ink to hide a password? Psycho!",
+        );
+        r.setCurrentState("blacklight_state");
+        setTimeout(() => {
+          const r2 = refs.room;
+          if (!r2) return;
+          r2.setCurrentState("dark_state");
+          pinSeen = true;
+        }, 3000);
+      }
     },
   });
   itemManager.add(blacklight.id, blacklight);
@@ -294,7 +389,7 @@ export async function createOfficeScene(opts: {
     stageTexture: bagClosedTexture,
     inventarTexture: bagClosedTexture,
   });
-  
+
   const bagOpenState = new ItemState({
     id: "bag_open",
     stageTexture: bagOpenTexture,
@@ -316,28 +411,44 @@ export async function createOfficeScene(opts: {
     scale: 1.0,
     interactionPoint: new Point(60, 100),
     onLook: () => {
-      ctx.dialogManager.addLine(actor, "My old document case. Guess who forgot the pin code?");
+      const a = refs.actor;
+      if (!a) return;
+      ctx.dialogManager.addLine(
+        a,
+        "My old document case. Guess who forgot the pin code?",
+      );
     },
     onPickUp: () => {
-        if (!bagOpened) {
-            ctx.dialogManager.addLine(actor, "The bag is locked. I need to open it first.");
-        } else {
-            ctx.dialogManager.addLine(actor, "I will take the documents with me.");
-        }  
+      const a = refs.actor;
+      if (!a) return;
+
+      if (!bagOpened) {
+        ctx.dialogManager.addLine(
+          a,
+          "The bag is locked. I need to open it first.",
+        );
+      } else {
+        ctx.dialogManager.addLine(a, "I will take the documents with me.");
+      }
     },
     onUse: () => {
-        if (!pinSeen) {
-            ctx.dialogManager.addLine(actor, "Nah, i wont guess the pin code.");
-        } else {
-            bag.setState("bag_open");
-            ctx.dialogManager.addLine(actor, "The bag is now open. Maybe I should take the documents with me.");
-            bagOpened = true;
-        }
+      const a = refs.actor;
+      if (!a) return;
+
+      if (!pinSeen) {
+        ctx.dialogManager.addLine(a, "Nah, i wont guess the pin code.");
+      } else {
+        bag.setState("bag_open");
+        ctx.dialogManager.addLine(
+          a,
+          "The bag is now open. Maybe I should take the documents with me.",
+        );
+        bagOpened = true;
+      }
     },
   });
   itemManager.add(bag.id, bag);
 
-  // Room States danach
   const startRoomState = new RoomState({
     id: "start_state",
     background: officeTexture,
@@ -359,15 +470,14 @@ export async function createOfficeScene(opts: {
     itemIds: ["lightSwitch"],
   });
 
-  room = new Room({
+  const room = new Room({
     ctx,
     states: [startRoomState, darkRoomState, blackRoomState],
     startState: "start_state",
   });
-  room.attach(world);
+  refs.room = room;
 
-  // Actor
-  actor = new Actor({
+  const actor = new Actor({
     sheet,
     walkAnimationName: "walk",
     idleAnimationName: "idle",
@@ -378,17 +488,12 @@ export async function createOfficeScene(opts: {
     animationSpeed: 0.15,
     room,
   });
+  refs.actor = actor;
+
+  room.attach(world);
   world.addChild(actor.view);
 
-  const inventory = new Inventory({ ctx });
   inventory.attach(world);
-
-  const verbMenu = new VerbMenu({
-    ctx,
-    eyeTexture: eyeIcon,
-    handTexture: handIcon,
-    hammerTexture: hammerIcon,
-  });
   verbMenu.attach(world);
 
   ctx.dialogManager.addLine(actor, "Oh, how did I end up here?");

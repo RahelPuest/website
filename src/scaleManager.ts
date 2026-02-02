@@ -47,7 +47,10 @@ export class ScaleManager {
 
     const scale = Math.min(this.virtualWidth / tw, this.virtualHeight / th);
     sprite.scale.set(scale);
-    sprite.position.set((this.virtualWidth - tw * scale) / 2, (this.virtualHeight - th * scale) / 2);
+    sprite.position.set(
+      (this.virtualWidth - tw * scale) / 2,
+      (this.virtualHeight - th * scale) / 2,
+    );
   }
 
   public worldToScreenX(wx: number): number {
@@ -66,8 +69,13 @@ export class ScaleManager {
     this.screenW = screenW;
     this.screenH = screenH;
 
-    const rawScale = Math.min(this.screenW / this.virtualWidth, this.screenH / this.virtualHeight);
-    this.worldScale = this.useIntegerScaling ? Math.max(1, Math.floor(rawScale)) : rawScale;
+    const rawScale = Math.min(
+      this.screenW / this.virtualWidth,
+      this.screenH / this.virtualHeight,
+    );
+    this.worldScale = this.useIntegerScaling
+      ? Math.max(1, Math.floor(rawScale))
+      : rawScale;
 
     const worldPixelW = this.virtualWidth * this.worldScale;
     const worldPixelH = this.virtualHeight * this.worldScale;
@@ -76,7 +84,9 @@ export class ScaleManager {
     this.worldOffsetY = (this.screenH - worldPixelH) / 2;
 
     if (!this.world || !this.ui) {
-      throw new Error("ScaleManager not bound. Call scaleManager.bind(world, ui) first.");
+      throw new Error(
+        "ScaleManager not bound. Call scaleManager.bind(world, ui) first.",
+      );
     }
 
     this.world.scale.set(this.worldScale);

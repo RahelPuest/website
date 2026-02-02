@@ -1,6 +1,8 @@
-import { Container, Graphics, FederatedPointerEvent } from "pixi.js";
+import { Container, Graphics, FederatedPointerEvent, Sprite } from "pixi.js";
 import { GameContext } from "./context";
 import { Item } from "./item";
+
+type SpriteWithId = Sprite & { __id?: string };
 
 export class Inventory {
   private readonly ctx: GameContext;
@@ -47,7 +49,7 @@ export class Inventory {
     icon.position.set(4 + (this.items.length - 1) * this.iconSpacing, 2);
     icon.scale.set(0.5);
 
-    (icon as any).__id = item.id;
+    (icon as SpriteWithId).__id = item.id;
 
     icon.on("pointerdown", (e: FederatedPointerEvent) => {
       switch (this.ctx.verb) {
@@ -61,7 +63,7 @@ export class Inventory {
           item.onPickUp?.();
           break;
       }
-      
+
       e.stopPropagation();
     });
 
