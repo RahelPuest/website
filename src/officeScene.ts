@@ -38,18 +38,8 @@ let isFaxPrinting = false;
 let isRoomDark = false;
 
 export const walkMask = new Polygon([
-  40, 80, 
-  2, 80, 
-  2, 130, 
-  238, 130, 
-  238, 80, 
-  200, 80, 
-  200, 86, 
-  180, 86, 
-  180, 80,
-  105, 80, 
-  105, 100, 
-  40, 100,
+  40, 80, 2, 80, 2, 130, 238, 130, 238, 80, 200, 80, 200, 86, 180, 86, 180, 80,
+  105, 80, 105, 100, 40, 100,
 ]);
 
 export async function createOfficeScene(opts: {
