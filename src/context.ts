@@ -14,7 +14,7 @@ export class GameContext {
     public readonly dialogManager: DialogManager,
     public readonly scaleManager: ScaleManager,
     public readonly itemManager: ItemManager,
-    initialVerb: Verb = "pickup",
+    initialVerb: Verb = "look",
   ) {
     this.verb = initialVerb;
   }

@@ -17,6 +17,7 @@ export type OfficeScene = {
   verbMenu: VerbMenu;
   items: {
     cv: Item;
+    projects: Item;
     lightSwitch: Item;
     router: Item;
     faxMachine: Item;
@@ -25,9 +26,31 @@ export type OfficeScene = {
   };
 };
 
-let faxPrinted = false;
-let pinSeen = false;
-let bagOpened = false;
+let isFaxPrinted = false;
+let isPinSeen = false;
+let isBagOpened = false;
+
+let isRouterOn = false;
+let isFaxPoweredOn = false;
+let isFaxConnected = false;
+let isFaxPrinting = false;
+
+let isRoomDark = false;
+
+export const walkMask = new Polygon([
+  40, 80, 
+  2, 80, 
+  2, 130, 
+  238, 130, 
+  238, 80, 
+  200, 80, 
+  200, 86, 
+  180, 86, 
+  180, 80,
+  105, 80, 
+  105, 100, 
+  40, 100,
+]);
 
 export async function createOfficeScene(opts: {
   ctx: GameContext;
@@ -50,6 +73,8 @@ export async function createOfficeScene(opts: {
   const sheet = await Assets.load("assets/spritesheet.json");
 
   const cvTexture = await Assets.load("assets/paper.png");
+  const projectsTexture = await Assets.load("assets/projects.png");
+
   const lightSwitchOffTexture = await Assets.load("assets/lightSwitch.png");
   const lightSwitchOnTexture = await Assets.load("assets/lightSwitch_on.png");
 
@@ -86,6 +111,12 @@ export async function createOfficeScene(opts: {
     room: null as Room | null,
   };
 
+  const say = (line: string, who?: Actor | null): void => {
+    const a = who ?? refs.actor;
+    if (!a) return;
+    ctx.dialogManager.addLine(a, line);
+  };
+
   const inventory = new Inventory({ ctx });
   const verbMenu = new VerbMenu({
     ctx,
@@ -109,23 +140,44 @@ export async function createOfficeScene(opts: {
     scale: 0.5,
     interactionPoint: new Point(150, 95),
     onLook: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(a, "This Rahel person seems pretty awesome!");
+      say("This Rahel person seems pretty awesome!");
     },
     onPickUp: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(a, "I will take this.");
+      say("I will take this.");
       inventory.pick(cv);
     },
     onUse: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(a, "Am I supposed to eat the CV or what?");
+      say("Am I supposed to eat the CV or what?");
     },
   });
   itemManager.add(cv.id, cv);
+
+  const projectsState = new ItemState({
+    id: "projects",
+    stageTexture: projectsTexture,
+    inventarTexture: projectsTexture,
+  });
+
+  const projects = new Item({
+    id: "projects",
+    states: [projectsState],
+    startState: "projects",
+    x: 180,
+    y: 95,
+    scale: 0.5,
+    interactionPoint: new Point(170, 95),
+    onLook: () => {
+      say("This Rahel person did so much cools stuff! I wish i was her.");
+    },
+    onPickUp: () => {
+      say("I will take this.");
+      inventory.pick(projects);
+    },
+    onUse: () => {
+      say("Am I supposed to eat the projects or what?");
+    },
+  });
+  itemManager.add(projects.id, projects);
 
   const faxMachineOffState = new ItemState({
     id: "fax_off",
@@ -154,53 +206,40 @@ export async function createOfficeScene(opts: {
     scale: 1,
     interactionPoint: new Point(175, 85),
     onLook: () => {
-      const a = refs.actor;
-      if (!a) return;
-
-      if (faxMachine.getStateId() === "fax_off") {
-        ctx.dialogManager.addLine(
-          a,
-          "The fax machine is not connected. Who even uses those anymore?",
-        );
-      } else if (faxMachine.getStateId() === "fax_on") {
-        ctx.dialogManager.addLine(
-          a,
-          "It's connected now. Seems like there is a pending fax.",
-        );
-      } else if (faxMachine.getStateId() === "fax_printing") {
-        ctx.dialogManager.addLine(a, "The fax machine is printing.");
+      if (!isFaxConnected) {
+        say("The fax machine is not connected. Who even uses those anymore?");
+      } else if (isFaxPrinting) {
+        say("The fax machine is printing.");
+      } else {
+        say("It's connected now. Seems like there is a pending fax.");
       }
     },
     onPickUp: () => {
-      const a = refs.actor;
-      if (!a) return;
-
-      if (!faxPrinted) {
-        ctx.dialogManager.addLine(
-          a,
-          "Why should i carry a fax machine with me?",
-        );
+      if (!isFaxPrinted) {
+        say("Why should i carry a fax machine with me?");
       } else {
-        ctx.dialogManager.addLine(a, "I should take the printed fax with me.");
+        say("I should take the printed fax with me.");
         inventory.pick(cv);
         faxMachine.stageView.texture = faxMachineIdleTexture;
       }
     },
     onUse: () => {
-      const a = refs.actor;
-      if (!a) return;
+      if (!isFaxPoweredOn) {
+        isFaxPoweredOn = true;
+        isFaxConnected = isRouterOn;
 
-      if (faxMachine.getStateId() === "fax_off") {
         faxMachine.setState("fax_on");
-        ctx.dialogManager.addLine(
-          a,
-          "Nothing happens. Its still not connected.",
-        );
+
+        if (!isFaxConnected) {
+          say("Nothing happens. Its still not connected.");
+        }
         return;
       }
 
-      if (faxMachine.getStateId() === "fax_on") {
-        ctx.dialogManager.addLine(a, "Ohhhh it's printing.");
+      if (isFaxConnected && !isFaxPrinting && !isFaxPrinted) {
+        say("Ohhhh it's printing.");
+        isFaxPrinting = true;
+
         faxMachine.setState("fax_printing");
 
         setTimeout(() => {
@@ -212,10 +251,9 @@ export async function createOfficeScene(opts: {
         }, 1500);
 
         setTimeout(() => {
-          const a2 = refs.actor;
-          if (!a2) return;
-          ctx.dialogManager.addLine(a2, "Whoa!");
-          faxPrinted = true;
+          say("Whoa!");
+          isFaxPrinted = true;
+          isFaxPrinting = false;
         }, 2000);
       }
     },
@@ -243,29 +281,29 @@ export async function createOfficeScene(opts: {
     scale: 1,
     interactionPoint: new Point(210, 80),
     onLook: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(a, "A Wi-Fi router. It seems to be off.");
+      say("A Wi-Fi router. It seems to be off.");
     },
     onPickUp: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(a, "I don't need to take the router with me.");
+      say("I don't need to take the router with me.");
     },
     onUse: () => {
-      const a = refs.actor;
-      if (!a) return;
+      if (!isRouterOn) {
+        isRouterOn = true;
 
-      if (router.getStateId() === "router_off") {
         router.setState("router_on");
-        ctx.dialogManager.addLine(
-          a,
-          "The router is now on. I hope there's internet!",
-        );
+        say("The router is now on. I hope there's internet!");
+
         faxMachine.setState("fax_on");
+        isFaxConnected = isFaxPoweredOn;
       } else {
+        isRouterOn = false;
+
         router.setState("router_off");
-        ctx.dialogManager.addLine(a, "I turned the router off.");
+        say("I turned the router off.");
+
+        isFaxConnected = false;
+        isFaxPoweredOn = false;
+        isFaxPrinting = false;
         faxMachine.setState("fax_off");
       }
     },
@@ -293,34 +331,26 @@ export async function createOfficeScene(opts: {
     scale: 0.5,
     interactionPoint: new Point(30, 80),
     onLook: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(
-        a,
-        "A strangely oversized light switch. Weird.",
-      );
+      say("A strangely oversized light switch. Weird.");
     },
     onPickUp: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(
-        a,
-        "The switch is screwed in place. I can't take it with me.",
-      );
+      say("The switch is screwed in place. I can't take it with me.");
     },
     onUse: () => {
-      const a = refs.actor;
       const r = refs.room;
-      if (!a || !r) return;
+      if (!r) return;
 
-      if (lightSwitch.getStateId() === "switch_off") {
+      if (!isRoomDark) {
+        isRoomDark = true;
         r.setCurrentState("dark_state");
         lightSwitch.setState("switch_on");
       } else {
+        isRoomDark = false;
         r.setCurrentState("start_state");
         lightSwitch.setState("switch_off");
       }
-      ctx.dialogManager.addLine(a, "Click!");
+
+      say("Click!");
     },
   });
   itemManager.add(lightSwitch.id, lightSwitch);
@@ -335,49 +365,38 @@ export async function createOfficeScene(opts: {
     id: "blacklight",
     states: [blacklightState],
     startState: "blacklight",
-    x: 150,
+    x: 170,
     y: 110,
-    scale: 1.0,
-    interactionPoint: new Point(150, 110),
+    scale: 0.5,
+    interactionPoint: new Point(160, 110),
     onLook: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(
-        a,
-        "A blacklight. I wonder what I could use this for?",
-      );
+      say("A blacklight. I wonder what I could use this for?");
     },
     onPickUp: () => {
-      const a = refs.actor;
-      const r = refs.room;
-      if (!a || !r) return;
-
-      if (r.getCurrentStateId() === "start_state") {
-        ctx.dialogManager.addLine(a, "I will take the blacklight with me.");
+      if (!isRoomDark) {
+        say("I will take the blacklight with me.");
         inventory.pick(blacklight);
       }
     },
     onUse: () => {
-      const a = refs.actor;
       const r = refs.room;
-      if (!a || !r) return;
+      if (!r) return;
 
-      if (r.getCurrentStateId() === "start_state") {
-        ctx.dialogManager.addLine(
-          a,
-          "Its too bright to see anything with the blacklight.",
-        );
-      } else if (r.getCurrentStateId() === "dark_state") {
-        ctx.dialogManager.addLine(
-          a,
+      if (!isRoomDark) {
+        say("Its too bright to see anything with the blacklight.");
+      } else {
+        say(
           "What?! Wo uses blacklight colored ink to hide a password? Psycho!",
         );
+
         r.setCurrentState("blacklight_state");
+
         setTimeout(() => {
           const r2 = refs.room;
           if (!r2) return;
+
           r2.setCurrentState("dark_state");
-          pinSeen = true;
+          isPinSeen = true;
         }, 3000);
       }
     },
@@ -407,43 +426,27 @@ export async function createOfficeScene(opts: {
     states: [bagClosedState, bagOpenState, bagEmptyState],
     startState: "bag_closed",
     x: 58,
-    y: 84,
+    y: 83.5,
     scale: 1.0,
     interactionPoint: new Point(60, 100),
     onLook: () => {
-      const a = refs.actor;
-      if (!a) return;
-      ctx.dialogManager.addLine(
-        a,
-        "My old document case. Guess who forgot the pin code?",
-      );
+      say("My old document case. Guess who forgot the pin code?");
     },
     onPickUp: () => {
-      const a = refs.actor;
-      if (!a) return;
-
-      if (!bagOpened) {
-        ctx.dialogManager.addLine(
-          a,
-          "The bag is locked. I need to open it first.",
-        );
+      if (!isBagOpened) {
+        say("The bag is locked. I need to open it first.");
       } else {
-        ctx.dialogManager.addLine(a, "I will take the documents with me.");
+        say("I will take the documents with me.");
+        inventory.pick(projects);
       }
     },
     onUse: () => {
-      const a = refs.actor;
-      if (!a) return;
-
-      if (!pinSeen) {
-        ctx.dialogManager.addLine(a, "Nah, i wont guess the pin code.");
+      if (!isPinSeen) {
+        say("Nah, i wont guess the pin code.");
       } else {
         bag.setState("bag_open");
-        ctx.dialogManager.addLine(
-          a,
-          "The bag is now open. Maybe I should take the documents with me.",
-        );
-        bagOpened = true;
+        say("The bag is now open. Maybe I should take the documents with me.");
+        isBagOpened = true;
       }
     },
   });
@@ -452,21 +455,21 @@ export async function createOfficeScene(opts: {
   const startRoomState = new RoomState({
     id: "start_state",
     background: officeTexture,
-    walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
+    walkMask: walkMask,
     itemIds: ["lightSwitch", "router", "faxMachine", "blacklight", "bag"],
   });
 
   const darkRoomState = new RoomState({
     id: "dark_state",
     background: darkOfficeTexture,
-    walkMask: new Polygon([0, 80, 240, 80, 240, 135, 0, 135]),
+    walkMask: walkMask,
     itemIds: ["lightSwitch"],
   });
 
   const blackRoomState = new RoomState({
     id: "blacklight_state",
     background: blacklightOfficeTexture,
-    walkMask: new Polygon([0, 0, 0, 0, 0, 0, 0, 0]),
+    walkMask: walkMask,
     itemIds: ["lightSwitch"],
   });
 
@@ -496,13 +499,13 @@ export async function createOfficeScene(opts: {
   inventory.attach(world);
   verbMenu.attach(world);
 
-  ctx.dialogManager.addLine(actor, "Oh, how did I end up here?");
+  say("Oh, how did I end up here?");
 
   return {
     actor,
     room,
     inventory,
     verbMenu,
-    items: { cv, lightSwitch, router, faxMachine, blacklight, bag },
+    items: { cv, projects, lightSwitch, router, faxMachine, blacklight, bag },
   };
 }

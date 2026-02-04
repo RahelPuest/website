@@ -1,6 +1,8 @@
-import { Container, Point, Sprite } from "pixi.js";
+import { Container, Point, Sprite, Graphics } from "pixi.js";
 import type { GameContext } from "./context";
 import type { RoomState } from "./roomState";
+
+const DEBUG_WALKMASK = false;
 
 export class Room {
   private readonly ctx: GameContext;
@@ -12,6 +14,8 @@ export class Room {
   private readonly background: Sprite;
 
   private readonly itemsLayer: Container;
+
+  private debugWalkMaskGfx?: Graphics;
 
   public constructor(opts: {
     ctx: GameContext;
@@ -39,6 +43,13 @@ export class Room {
     this.itemsLayer = new Container();
     this.itemsLayer.zIndex = 0;
     this.root.addChild(this.itemsLayer);
+
+    if (DEBUG_WALKMASK) {
+      this.debugWalkMaskGfx = new Graphics();
+      this.debugWalkMaskGfx.alpha = 0.5;
+      this.background.addChild(this.debugWalkMaskGfx);
+      this.redrawDebugWalkMask(initial);
+    }
 
     this.loadStateItems(initial);
 
@@ -68,6 +79,10 @@ export class Room {
     this.background.texture = next.background;
     this.loadStateItems(next);
 
+    if (DEBUG_WALKMASK) {
+      this.redrawDebugWalkMask(next);
+    }
+
     this.refreshView();
   }
 
@@ -79,13 +94,21 @@ export class Room {
       if (!item) continue;
 
       item.stageView.removeFromParent();
-
       this.itemsLayer.addChild(item.stageView);
     }
   }
 
   private refreshView(): void {
     this.ctx.scaleManager.fitSpriteContain(this.background);
+  }
+
+  private redrawDebugWalkMask(state: RoomState): void {
+    if (!this.debugWalkMaskGfx) return;
+
+    this.debugWalkMaskGfx.clear();
+    this.debugWalkMaskGfx.beginFill(0xff0000, 1);
+    this.debugWalkMaskGfx.drawPolygon(state.walkMask.points);
+    this.debugWalkMaskGfx.endFill();
   }
 
   private getState(id: string): RoomState {

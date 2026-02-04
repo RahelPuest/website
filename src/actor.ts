@@ -51,6 +51,7 @@ export class Actor {
     this.view.anchor._x = 0.5;
     this.view.anchor._y = 0.8;
     this.view.position.set(opts.x, opts.y);
+    this.view.eventMode = "none";
 
     this.view.animationSpeed = opts.animationSpeed ?? 0.15;
     this.view.play();

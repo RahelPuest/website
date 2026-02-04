@@ -20,7 +20,7 @@ export class Inventory {
     this.container.position.set(40, 0);
 
     this.bg = new Graphics();
-    this.bg.rect(0, 0, 240, 10);
+    this.bg.rect(0, 0, 200, 10);
     this.bg.fill({ color: 0x222222, alpha: 0.8 });
     this.container.addChild(this.bg);
   }

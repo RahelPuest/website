@@ -18,7 +18,7 @@ import { createOfficeScene } from "./officeScene";
 
 const VIRTUAL_WIDTH = 240;
 const VIRTUAL_HEIGHT = 135;
-const USE_INTEGER_SCALING = false;
+const USE_INTEGER_SCALING = true;
 
 type SpriteWithId = Sprite & { __id?: string };
 
