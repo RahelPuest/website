@@ -1,4 +1,4 @@
-import { Assets, Point, Polygon, Container } from "pixi.js";
+import { Point, Polygon, Container } from "pixi.js";
 
 import { Actor } from "./actor";
 import { Item } from "./item";
@@ -9,6 +9,7 @@ import { GameContext } from "./context";
 import { RoomState } from "./roomState";
 import { ItemState } from "./itemState";
 import { Inventory } from "./inventory";
+import { loadOfficeAssets } from "./officeAssets";
 
 export type OfficeScene = {
   actor: Actor;
@@ -23,19 +24,22 @@ export type OfficeScene = {
     faxMachine: Item;
     blacklight: Item;
     bag: Item;
+    picture: Item;
   };
 };
 
-let isFaxPrinted = false;
-let isPinSeen = false;
-let isBagOpened = false;
+type OfficeSceneState = {
+  isFaxPrinted: boolean;
+  isPinSeen: boolean;
+  isBagOpened: boolean;
 
-let isRouterOn = false;
-let isFaxPoweredOn = false;
-let isFaxConnected = false;
-let isFaxPrinting = false;
+  isRouterOn: boolean;
+  isFaxPoweredOn: boolean;
+  isFaxConnected: boolean;
+  isFaxPrinting: boolean;
 
-let isRoomDark = false;
+  isRoomDark: boolean;
+};
 
 export const walkMask = new Polygon([
   40, 80, 2, 80, 2, 130, 238, 130, 238, 80, 200, 80, 200, 86, 180, 86, 180, 80,
@@ -52,49 +56,47 @@ export async function createOfficeScene(opts: {
 }): Promise<OfficeScene> {
   const { ctx, world, itemManager, virtualWidth, virtualHeight } = opts;
 
-  const officeTexture = await Assets.load("assets/office_background.png");
-  const darkOfficeTexture = await Assets.load(
-    "assets/office_background_dark.png",
-  );
-  const blacklightOfficeTexture = await Assets.load(
-    "assets/office_background_blacklight.png",
-  );
+  const state: OfficeSceneState = {
+    isFaxPrinted: false,
+    isPinSeen: false,
+    isBagOpened: false,
 
-  const sheet = await Assets.load("assets/spritesheet.json");
+    isRouterOn: false,
+    isFaxPoweredOn: false,
+    isFaxConnected: false,
+    isFaxPrinting: false,
 
-  const cvTexture = await Assets.load("assets/paper.png");
-  const projectsTexture = await Assets.load("assets/projects.png");
+    isRoomDark: false,
+  };
 
-  const lightSwitchOffTexture = await Assets.load("assets/lightSwitch.png");
-  const lightSwitchOnTexture = await Assets.load("assets/lightSwitch_on.png");
+  const assets = await loadOfficeAssets();
 
-  const routerOffTexture = await Assets.load("assets/router_off.png");
-  const routerOnTexture = await Assets.load("assets/router_on.png");
-
-  const faxMachineOffTexture = await Assets.load("assets/fax_off.png");
-  const faxMachineOnTexture = await Assets.load("assets/fax_on.png");
-  const faxMachinePrinting01Texture = await Assets.load(
-    "assets/fax_on_paper_01.png",
-  );
-  const faxMachinePrinting02Texture = await Assets.load(
-    "assets/fax_on_paper_02.png",
-  );
-  const faxMachinePrinting03Texture = await Assets.load(
-    "assets/fax_on_paper_03.png",
-  );
-  const faxMachineIdleTexture = await Assets.load("assets/fax_on_idle.png");
-
-  const bagClosedTexture = await Assets.load("assets/bag_closed.png");
-  const bagOpenTexture = await Assets.load("assets/bag_open.png");
-  const bagEmptyTexture = await Assets.load("assets/bag_empty.png");
-
-  const blacklightTexture = await Assets.load("assets/blacklight.png");
-
-  await Assets.load("assets/fonts/ByteBounce.ttf");
-
-  const eyeIcon = await Assets.load("assets/eye.png");
-  const handIcon = await Assets.load("assets/hand.png");
-  const hammerIcon = await Assets.load("assets/hammer.png");
+  const {
+    officeTexture,
+    darkOfficeTexture,
+    blacklightOfficeTexture,
+    sheet,
+    cvTexture,
+    projectsTexture,
+    lightSwitchOffTexture,
+    lightSwitchOnTexture,
+    routerOffTexture,
+    routerOnTexture,
+    faxMachineOffTexture,
+    faxMachineOnTexture,
+    faxMachinePrinting01Texture,
+    faxMachinePrinting02Texture,
+    faxMachinePrinting03Texture,
+    faxMachineIdleTexture,
+    bagClosedTexture,
+    bagOpenTexture,
+    bagEmptyTexture,
+    blacklightTexture,
+    pictureTexture,
+    eyeIcon,
+    handIcon,
+    hammerIcon,
+  } = assets;
 
   const refs = {
     actor: null as Actor | null,
@@ -196,16 +198,16 @@ export async function createOfficeScene(opts: {
     scale: 1,
     interactionPoint: new Point(175, 85),
     onLook: () => {
-      if (!isFaxConnected) {
+      if (!state.isFaxConnected) {
         say("The fax machine is not connected. Who even uses those anymore?");
-      } else if (isFaxPrinting) {
+      } else if (state.isFaxPrinting) {
         say("The fax machine is printing.");
       } else {
         say("It's connected now. Seems like there is a pending fax.");
       }
     },
     onPickUp: () => {
-      if (!isFaxPrinted) {
+      if (!state.isFaxPrinted) {
         say("Why should i carry a fax machine with me?");
       } else {
         say("I should take the printed fax with me.");
@@ -214,21 +216,21 @@ export async function createOfficeScene(opts: {
       }
     },
     onUse: () => {
-      if (!isFaxPoweredOn) {
-        isFaxPoweredOn = true;
-        isFaxConnected = isRouterOn;
+      if (!state.isFaxPoweredOn) {
+        state.isFaxPoweredOn = true;
+        state.isFaxConnected = state.isRouterOn;
 
         faxMachine.setState("fax_on");
 
-        if (!isFaxConnected) {
+        if (!state.isFaxConnected) {
           say("Nothing happens. Its still not connected.");
         }
         return;
       }
 
-      if (isFaxConnected && !isFaxPrinting && !isFaxPrinted) {
+      if (state.isFaxConnected && !state.isFaxPrinting && !state.isFaxPrinted) {
         say("Ohhhh it's printing.");
-        isFaxPrinting = true;
+        state.isFaxPrinting = true;
 
         faxMachine.setState("fax_printing");
 
@@ -242,8 +244,8 @@ export async function createOfficeScene(opts: {
 
         setTimeout(() => {
           say("Whoa!");
-          isFaxPrinted = true;
-          isFaxPrinting = false;
+          state.isFaxPrinted = true;
+          state.isFaxPrinting = false;
         }, 2000);
       }
     },
@@ -277,23 +279,23 @@ export async function createOfficeScene(opts: {
       say("I don't need to take the router with me.");
     },
     onUse: () => {
-      if (!isRouterOn) {
-        isRouterOn = true;
+      if (!state.isRouterOn) {
+        state.isRouterOn = true;
 
         router.setState("router_on");
         say("The router is now on. I hope there's internet!");
 
         faxMachine.setState("fax_on");
-        isFaxConnected = isFaxPoweredOn;
+        state.isFaxConnected = true;
       } else {
-        isRouterOn = false;
+        state.isRouterOn = false;
 
         router.setState("router_off");
         say("I turned the router off.");
 
-        isFaxConnected = false;
-        isFaxPoweredOn = false;
-        isFaxPrinting = false;
+        state.isFaxConnected = false;
+        state.isFaxPoweredOn = false;
+        state.isFaxPrinting = false;
         faxMachine.setState("fax_off");
       }
     },
@@ -330,12 +332,12 @@ export async function createOfficeScene(opts: {
       const r = refs.room;
       if (!r) return;
 
-      if (!isRoomDark) {
-        isRoomDark = true;
+      if (!state.isRoomDark) {
+        state.isRoomDark = true;
         r.setCurrentState("dark_state");
         lightSwitch.setState("switch_on");
       } else {
-        isRoomDark = false;
+        state.isRoomDark = false;
         r.setCurrentState("start_state");
         lightSwitch.setState("switch_off");
       }
@@ -363,7 +365,7 @@ export async function createOfficeScene(opts: {
       say("A blacklight. I wonder what I could use this for?");
     },
     onPickUp: () => {
-      if (!isRoomDark) {
+      if (!state.isRoomDark) {
         say("I will take the blacklight with me.");
         inventory.pick(blacklight);
       }
@@ -372,7 +374,7 @@ export async function createOfficeScene(opts: {
       const r = refs.room;
       if (!r) return;
 
-      if (!isRoomDark) {
+      if (!state.isRoomDark) {
         say("Its too bright to see anything with the blacklight.");
       } else {
         say(
@@ -386,7 +388,7 @@ export async function createOfficeScene(opts: {
           if (!r2) return;
 
           r2.setCurrentState("dark_state");
-          isPinSeen = true;
+          state.isPinSeen = true;
         }, 3000);
       }
     },
@@ -423,7 +425,7 @@ export async function createOfficeScene(opts: {
       say("My old document case. Guess who forgot the pin code?");
     },
     onPickUp: () => {
-      if (!isBagOpened) {
+      if (!state.isBagOpened) {
         say("The bag is locked. I need to open it first.");
       } else {
         say("I will take the documents with me.");
@@ -431,22 +433,55 @@ export async function createOfficeScene(opts: {
       }
     },
     onUse: () => {
-      if (!isPinSeen) {
+      if (!state.isPinSeen) {
         say("Nah, i wont guess the pin code.");
       } else {
         bag.setState("bag_open");
         say("The bag is now open. Maybe I should take the documents with me.");
-        isBagOpened = true;
+        state.isBagOpened = true;
       }
     },
   });
   itemManager.add(bag.id, bag);
 
+  const pictureBrightState = new ItemState({
+    id: "picture_bright",
+    stageTexture: pictureTexture,
+    inventarTexture: pictureTexture,
+  });
+
+  const picture = new Item({
+    id: "picture",
+    states: [pictureBrightState],
+    startState: "picture_bright",
+    x: 111,
+    y: 47,
+    scale: 1,
+    interactionPoint: new Point(120, 60),
+    onLook: () => {
+      say("Wow, this Rahel person look awsome in this picture!");
+    },
+    onPickUp: () => {
+      say("I don't think I should take this picture with me.");
+    },
+    onUse: () => {
+      say("I don't see why I should use this picture.");
+    },
+  });
+  itemManager.add(picture.id, picture);
+
   const startRoomState = new RoomState({
     id: "start_state",
     background: officeTexture,
     walkMask: walkMask,
-    itemIds: ["lightSwitch", "router", "faxMachine", "blacklight", "bag"],
+    itemIds: [
+      "lightSwitch",
+      "router",
+      "faxMachine",
+      "blacklight",
+      "bag",
+      "picture",
+    ],
   });
 
   const darkRoomState = new RoomState({
@@ -496,6 +531,15 @@ export async function createOfficeScene(opts: {
     room,
     inventory,
     verbMenu,
-    items: { cv, projects, lightSwitch, router, faxMachine, blacklight, bag },
+    items: {
+      cv,
+      projects,
+      lightSwitch,
+      router,
+      faxMachine,
+      blacklight,
+      bag,
+      picture,
+    },
   };
 }

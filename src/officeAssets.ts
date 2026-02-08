@@ -1,66 +1,81 @@
-import { Assets } from "pixi.js";
-import type { Texture, Spritesheet } from "pixi.js";
+import { Assets, Spritesheet, Texture } from "pixi.js";
 
-export const officeBackgroundTexture = await Assets.load<Texture>(
-  "assets/office_background.png",
-);
-export const officeBackgroundDarkTexture = await Assets.load<Texture>(
-  "assets/office_background_dark.png",
-);
-export const officeBackgroundBlacklightTexture = await Assets.load<Texture>(
-  "assets/office_background_blacklight.png",
-);
+export type OfficeAssets = {
+  officeTexture: Texture;
+  darkOfficeTexture: Texture;
+  blacklightOfficeTexture: Texture;
+  sheet: Spritesheet;
+  cvTexture: Texture;
+  projectsTexture: Texture;
+  lightSwitchOffTexture: Texture;
+  lightSwitchOnTexture: Texture;
+  routerOffTexture: Texture;
+  routerOnTexture: Texture;
+  faxMachineOffTexture: Texture;
+  faxMachineOnTexture: Texture;
+  faxMachinePrinting01Texture: Texture;
+  faxMachinePrinting02Texture: Texture;
+  faxMachinePrinting03Texture: Texture;
+  faxMachineIdleTexture: Texture;
+  bagClosedTexture: Texture;
+  bagOpenTexture: Texture;
+  bagEmptyTexture: Texture;
+  blacklightTexture: Texture;
+  pictureTexture: Texture;
+  eyeIcon: Texture;
+  handIcon: Texture;
+  hammerIcon: Texture;
+  byteBounceFont: unknown;
+};
 
-export const sheet = await Assets.load<Spritesheet>("assets/spritesheet.json");
+const OFFICE_BUNDLE_NAME = "office";
 
-export const paperTexture = await Assets.load<Texture>("assets/paper.png");
+let isBundleRegistered = false;
 
-export const lightSwitchOffTexture = await Assets.load<Texture>(
-  "assets/lightSwitch.png",
-);
-export const lightSwitchOnTexture = await Assets.load<Texture>(
-  "assets/lightSwitch_on.png",
-);
+function ensureOfficeBundleRegistered(): void {
+  if (isBundleRegistered) return;
+  isBundleRegistered = true;
 
-export const routerOffTexture = await Assets.load<Texture>(
-  "assets/router_off.png",
-);
-export const routerOnTexture = await Assets.load<Texture>(
-  "assets/router_on.png",
-);
+  Assets.addBundle(OFFICE_BUNDLE_NAME, {
+    officeTexture: "assets/office_background.png",
+    darkOfficeTexture: "assets/office_background_dark.png",
+    blacklightOfficeTexture: "assets/office_background_blacklight.png",
+    sheet: "assets/spritesheet.json",
 
-export const faxMachineOffTexture =
-  await Assets.load<Texture>("assets/fax_off.png");
-export const faxMachineOnTexture =
-  await Assets.load<Texture>("assets/fax_on.png");
-export const faxMachinePrinting01Texture = await Assets.load<Texture>(
-  "assets/fax_on_paper_01.png",
-);
-export const faxMachinePrinting02Texture = await Assets.load<Texture>(
-  "assets/fax_on_paper_02.png",
-);
-export const faxMachinePrinting03Texture = await Assets.load<Texture>(
-  "assets/fax_on_paper_03.png",
-);
-export const faxMachineIdleTexture = await Assets.load<Texture>(
-  "assets/fax_on_idle.png",
-);
+    cvTexture: "assets/paper.png",
+    projectsTexture: "assets/projects.png",
 
-export const bagClosedTexture = await Assets.load<Texture>(
-  "assets/bag_closed.png",
-);
-export const bagOpenTexture = await Assets.load<Texture>("assets/bag_open.png");
-export const bagEmptyTexture = await Assets.load<Texture>(
-  "assets/bag_empty.png",
-);
+    lightSwitchOffTexture: "assets/lightSwitch_on.png",
+    lightSwitchOnTexture: "assets/lightSwitch_off.png",
 
-export const blacklightTexture = await Assets.load<Texture>(
-  "assets/blacklight.png",
-);
+    routerOffTexture: "assets/router_off.png",
+    routerOnTexture: "assets/router_on.png",
 
-export const eyeIconTexture = await Assets.load<Texture>("assets/eye.png");
-export const handIconTexture = await Assets.load<Texture>("assets/hand.png");
-export const hammerIconTexture =
-  await Assets.load<Texture>("assets/hammer.png");
+    faxMachineOffTexture: "assets/fax_off.png",
+    faxMachineOnTexture: "assets/fax_on.png",
+    faxMachinePrinting01Texture: "assets/fax_on_paper_01.png",
+    faxMachinePrinting02Texture: "assets/fax_on_paper_02.png",
+    faxMachinePrinting03Texture: "assets/fax_on_paper_03.png",
+    faxMachineIdleTexture: "assets/fax_on_idle.png",
 
-export const byteBounceFont = await Assets.load("assets/fonts/ByteBounce.ttf");
+    bagClosedTexture: "assets/bag_closed.png",
+    bagOpenTexture: "assets/bag_open.png",
+    bagEmptyTexture: "assets/bag_empty.png",
+
+    blacklightTexture: "assets/blacklight.png",
+    pictureTexture: "assets/picture.png",
+
+    byteBounceFont: "assets/fonts/ByteBounce.ttf",
+
+    eyeIcon: "assets/eye.png",
+    handIcon: "assets/hand.png",
+    hammerIcon: "assets/hammer.png",
+  });
+}
+
+export async function loadOfficeAssets(): Promise<OfficeAssets> {
+  ensureOfficeBundleRegistered();
+
+  const loaded = await Assets.loadBundle(OFFICE_BUNDLE_NAME);
+  return loaded as OfficeAssets;
+}

@@ -40,6 +40,7 @@ let router: Item;
 let faxMachine: Item;
 let blacklight: Item;
 let bag: Item;
+let picture: Item;
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
@@ -140,6 +141,7 @@ async function main(): Promise<void> {
   faxMachine = scene.items.faxMachine;
   blacklight = scene.items.blacklight;
   bag = scene.items.bag;
+  picture = scene.items.picture;
 
   world.on("pointerdown", onWorldPointerDown);
 
@@ -149,6 +151,7 @@ async function main(): Promise<void> {
   faxMachine.stageView.on("pointerdown", onItemPointerDown);
   blacklight.stageView.on("pointerdown", onItemPointerDown);
   bag.stageView.on("pointerdown", onItemPointerDown);
+  picture.stageView.on("pointerdown", onItemPointerDown);
 
   scaleManager.applyResize(app.screen.width, app.screen.height);
   window.addEventListener("resize", onWindowResize);

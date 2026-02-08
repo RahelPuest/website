@@ -102,22 +102,76 @@ export class Actor {
 
       const step = this.speed * dtSeconds;
       const t = Math.min(1, step / dist);
+      const stepLen = Math.min(step, dist);
 
-      this.view.x = lerp(prevX, this.targetX, t);
-      this.view.y = lerp(prevY, this.targetY, t);
+      const nextX = lerp(prevX, this.targetX, t);
+      const nextY = lerp(prevY, this.targetY, t);
 
-      if (!this.room.isPassable(new Point(this.view.x, this.view.y))) {
-        this.view.x = prevX;
-        this.view.y = prevY;
+      const pGoal = new Point(nextX, nextY);
 
-        this.targetX = prevX;
-        this.targetY = prevY;
+      if (this.room.isPassable(pGoal)) {
+        this.view.x = nextX;
+        this.view.y = nextY;
+      } else {
+        const pUpProbe = new Point(prevX, prevY - stepLen);
 
-        this.isMoving = false;
-        this.switchToIdle();
+        if (!this.room.isPassable(pUpProbe)) {
+          const pXOnly = new Point(nextX, prevY);
 
-        this.clearPendingAction();
+          if (this.room.isPassable(pXOnly)) {
+            this.view.x = nextX;
+            this.view.y = prevY;
+          } else {
+            const pDown = new Point(prevX, prevY + stepLen);
+
+            if (this.room.isPassable(pDown)) {
+              this.view.x = prevX;
+              this.view.y = prevY + stepLen;
+            } else {
+              this.view.x = prevX;
+              this.view.y = prevY;
+
+              this.targetX = prevX;
+              this.targetY = prevY;
+
+              this.isMoving = false;
+              this.switchToIdle();
+
+              this.clearPendingAction();
+              return;
+            }
+          }
+        } else {
+          const pDown = new Point(prevX, prevY + stepLen);
+
+          if (this.room.isPassable(pDown)) {
+            this.view.x = prevX;
+            this.view.y = prevY + stepLen;
+          } else {
+            const pXOnly = new Point(nextX, prevY);
+
+            if (this.room.isPassable(pXOnly)) {
+              this.view.x = nextX;
+              this.view.y = prevY;
+            } else {
+              this.view.x = prevX;
+              this.view.y = prevY;
+
+              this.targetX = prevX;
+              this.targetY = prevY;
+
+              this.isMoving = false;
+              this.switchToIdle();
+
+              this.clearPendingAction();
+              return;
+            }
+          }
+        }
       }
+
+      if (this.targetX < this.view.x) this.faceLeft();
+      else if (this.targetX > this.view.x) this.faceRight();
 
       return;
     }
