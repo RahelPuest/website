@@ -44,6 +44,7 @@ let picture: Item;
 
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
+  dialogManager.onResize();
 }
 
 function onWorldPointerDown(e: FederatedPointerEvent): void {
@@ -154,6 +155,7 @@ async function main(): Promise<void> {
   picture.stageView.on("pointerdown", onItemPointerDown);
 
   scaleManager.applyResize(app.screen.width, app.screen.height);
+  dialogManager.onResize();
   window.addEventListener("resize", onWindowResize);
 
   app.ticker.add(onTick);

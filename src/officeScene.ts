@@ -39,6 +39,7 @@ type OfficeSceneState = {
   isFaxPrinting: boolean;
 
   isRoomDark: boolean;
+  isCvTaken: boolean;
 };
 
 export const walkMask = new Polygon([
@@ -67,6 +68,7 @@ export async function createOfficeScene(opts: {
     isFaxPrinting: false,
 
     isRoomDark: false,
+    isCvTaken: false,
   };
 
   const assets = await loadOfficeAssets();
@@ -139,7 +141,12 @@ export async function createOfficeScene(opts: {
       inventory.pick(cv);
     },
     onUse: () => {
-      say("Am I supposed to eat the CV or what?");
+      if(!state.isCvTaken) {
+        say("Am I supposed to eat the CV or what?");
+        return;
+      }
+      say("This beauty will go directly onto the evidence board.");
+      room.addItemIdToCurrentState("picture");
     },
   });
   itemManager.add(cv.id, cv);
@@ -166,7 +173,7 @@ export async function createOfficeScene(opts: {
       inventory.pick(projects);
     },
     onUse: () => {
-      say("Am I supposed to eat the projects or what?");
+      say("How shut i use this? Build a paper plane out of it and fly it? Nah, that would be a waste.");
     },
   });
   itemManager.add(projects.id, projects);
@@ -213,6 +220,7 @@ export async function createOfficeScene(opts: {
         say("I should take the printed fax with me.");
         inventory.pick(cv);
         faxMachine.stageView.texture = faxMachineIdleTexture;
+        state.isCvTaken = true;
       }
     },
     onUse: () => {
@@ -480,7 +488,6 @@ export async function createOfficeScene(opts: {
       "faxMachine",
       "blacklight",
       "bag",
-      "picture",
     ],
   });
 

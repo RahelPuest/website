@@ -120,4 +120,17 @@ export class Room {
   public getCurrentStateId(): string {
     return this.currentStateId;
   }
+
+  public addItemIdToCurrentState(id: string): void {
+    const state = this.getState(this.currentStateId);
+
+    state.addItemId(id);
+
+    const item = this.ctx.itemManager.getById(id);
+    if (!item) return;
+
+    item.stageView.removeFromParent();
+    this.itemsLayer.addChild(item.stageView);
+  }
+
 }

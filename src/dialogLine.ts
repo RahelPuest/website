@@ -5,21 +5,49 @@ export class DialogLine {
   private remainingMs: number;
   private isShown = false;
 
+  // Font sizes should be defined in virtual pixels and then scaled by the scene scale.
+  private readonly baseFontSize: number;
+  private currentScale = 1;
+
   constructor(opts: {
     text: string;
     x: number;
     y: number;
     durationMs: number;
+    baseFontSize: number;
+    scale: number;
   }) {
     this.remainingMs = opts.durationMs;
 
+    this.baseFontSize = opts.baseFontSize;
+    this.currentScale = this.clampScale(opts.scale);
+
     this.textView = new Text({
       text: opts.text,
-      style: { fill: "#00b913", fontSize: 72, fontFamily: "ByteBounce" },
+      style: {
+        fill: "#00b913",
+        fontFamily: "ByteBounce",
+        fontSize: Math.max(1, this.baseFontSize * this.currentScale),
+      },
     });
 
     this.textView.anchor.set(0.5);
     this.textView.position.set(opts.x, opts.y);
+  }
+
+  public setScale(scale: number): void {
+    const nextScale = this.clampScale(scale);
+    if (nextScale === this.currentScale) return;
+    this.currentScale = nextScale;
+
+    const style = this.textView.style as TextStyle;
+    style.fontSize = Math.max(1, this.baseFontSize * this.currentScale);
+    this.textView.style = style;
+  }
+
+  private clampScale(scale: number): number {
+    if (!Number.isFinite(scale)) return 1;
+    return Math.max(0.01, scale);
   }
 
   public show(parent: Container): void {

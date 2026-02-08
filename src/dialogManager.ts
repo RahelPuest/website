@@ -4,9 +4,14 @@ import { DialogLine } from "./dialogLine";
 import { ScaleManager } from "./scaleManager";
 
 const DEFAULT_LINE_DURATION_MS = 2000;
-const DEFAULT_VERTICAL_LINE_OFFSET = 256;
 
-const SCREEN_MARGIN = 8;
+// Layout values are expressed in virtual pixels and then scaled by worldScale.
+const DEFAULT_VERTICAL_LINE_OFFSET_VIRTUAL = 32;
+const SCREEN_MARGIN_VIRTUAL = 1;
+
+// Font size is expressed in virtual pixels and then scaled by worldScale.
+const DEFAULT_FONT_SIZE_VIRTUAL = 9;
+
 const WRAP_SCREEN_FRACTION = 0.6;
 
 export class DialogManager {
@@ -17,6 +22,18 @@ export class DialogManager {
   constructor(ui: Container, scaleManager: ScaleManager) {
     this.ui = ui;
     this.scaleManager = scaleManager;
+  }
+
+  public onResize(): void {
+    const scale = this.scaleManager.worldScale;
+    const maxW = Math.floor(this.scaleManager.screenWidth * WRAP_SCREEN_FRACTION);
+
+    for (const [, lines] of this.dialogLines) {
+      for (const line of lines) {
+        line.setScale(scale);
+        if (maxW > 0) line.setMaxWidth(maxW);
+      }
+    }
   }
 
   public onTick(dtMs: number): void {
@@ -44,6 +61,8 @@ export class DialogManager {
       x: 0,
       y: 0,
       durationMs: DEFAULT_LINE_DURATION_MS,
+      baseFontSize: DEFAULT_FONT_SIZE_VIRTUAL,
+      scale: this.scaleManager.worldScale,
     });
 
     line.show(this.ui);
@@ -65,6 +84,11 @@ export class DialogManager {
   private placeLineNearActor(actor: Actor, line: DialogLine): void {
     const p = this.scaleManager.worldToScreen(actor.view.x, actor.view.y);
 
+    // Keep line layout proportional to the world scale.
+    const scale = this.scaleManager.worldScale;
+    const screenMargin = SCREEN_MARGIN_VIRTUAL * scale;
+    const yOffset = DEFAULT_VERTICAL_LINE_OFFSET_VIRTUAL * scale;
+
     const sw = this.scaleManager.screenWidth;
     const sh = this.scaleManager.screenHeight;
 
@@ -72,10 +96,10 @@ export class DialogManager {
     const halfH = line.height / 2;
 
     let x = p.x;
-    let y = p.y - DEFAULT_VERTICAL_LINE_OFFSET;
+    let y = p.y - yOffset;
 
-    x = this.clamp(x, SCREEN_MARGIN + halfW, sw - SCREEN_MARGIN - halfW);
-    y = this.clamp(y, SCREEN_MARGIN + halfH, sh - SCREEN_MARGIN - halfH);
+    x = this.clamp(x, screenMargin + halfW, sw - screenMargin - halfW);
+    y = this.clamp(y, screenMargin + halfH, sh - screenMargin - halfH);
 
     line.setPosition(x, y);
   }
