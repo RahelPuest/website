@@ -26,7 +26,9 @@ export class DialogManager {
 
   public onResize(): void {
     const scale = this.scaleManager.worldScale;
-    const maxW = Math.floor(this.scaleManager.screenWidth * WRAP_SCREEN_FRACTION);
+    const maxW = Math.floor(
+      this.scaleManager.screenWidth * WRAP_SCREEN_FRACTION,
+    );
 
     for (const [, lines] of this.dialogLines) {
       for (const line of lines) {

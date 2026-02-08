@@ -141,7 +141,7 @@ export async function createOfficeScene(opts: {
       inventory.pick(cv);
     },
     onUse: () => {
-      if(!state.isCvTaken) {
+      if (!state.isCvTaken) {
         say("Am I supposed to eat the CV or what?");
         return;
       }
@@ -173,7 +173,9 @@ export async function createOfficeScene(opts: {
       inventory.pick(projects);
     },
     onUse: () => {
-      say("How shut i use this? Build a paper plane out of it and fly it? Nah, that would be a waste.");
+      say(
+        "How shut i use this? Build a paper plane out of it and fly it? Nah, that would be a waste.",
+      );
     },
   });
   itemManager.add(projects.id, projects);
@@ -482,13 +484,7 @@ export async function createOfficeScene(opts: {
     id: "start_state",
     background: officeTexture,
     walkMask: walkMask,
-    itemIds: [
-      "lightSwitch",
-      "router",
-      "faxMachine",
-      "blacklight",
-      "bag",
-    ],
+    itemIds: ["lightSwitch", "router", "faxMachine", "blacklight", "bag"],
   });
 
   const darkRoomState = new RoomState({

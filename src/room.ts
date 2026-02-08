@@ -132,5 +132,4 @@ export class Room {
     item.stageView.removeFromParent();
     this.itemsLayer.addChild(item.stageView);
   }
-
 }
