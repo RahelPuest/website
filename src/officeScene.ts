@@ -467,7 +467,7 @@ export async function createOfficeScene(opts: {
     x: 111,
     y: 47,
     scale: 1,
-    interactionPoint: new Point(120, 60),
+    interactionPoint: new Point(120, 90),
     onLook: () => {
       say("Wow, this Rahel person look awsome in this picture!");
     },

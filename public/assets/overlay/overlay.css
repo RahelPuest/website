@@ -1,0 +1,42 @@
+/* Fullscreen overlay on top of everything */
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+
+  padding: 16px; /* margin to screen edges */
+  box-sizing: border-box;
+}
+
+#overlay[hidden] {
+  display: none;
+}
+
+/* Centered panel with slight margin (via overlay padding) */
+#overlay-panel {
+  width: min(900px, 100%);
+  height: min(80vh, 100%);
+  background: #0f0f0f;
+  color: #eee;
+
+  border-radius: 12px;
+  overflow: auto;
+  padding: 14px;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+#overlay-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  margin-bottom: 12px;
+}

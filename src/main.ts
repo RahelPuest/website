@@ -42,6 +42,43 @@ let blacklight: Item;
 let bag: Item;
 let picture: Item;
 
+let overlayEl: HTMLDivElement;
+let overlayContentEl: HTMLDivElement;
+let overlayCloseBtn: HTMLButtonElement;
+
+let prevWorldEventMode: typeof world.eventMode | null = null;
+let prevUiEventMode: typeof ui.eventMode | null = null;
+
+async function openOverlay(htmlUrl: string): Promise<void> {
+  const res = await fetch(htmlUrl, { cache: "no-cache" });
+  overlayContentEl.innerHTML = await res.text();
+
+  overlayEl.hidden = false;
+
+  prevWorldEventMode = world.eventMode;
+  prevUiEventMode = ui.eventMode;
+
+  app.ticker.stop();
+  world.eventMode = "none";
+  ui.eventMode = "none";
+
+  document.body.style.overflow = "hidden";
+}
+
+function closeOverlay(): void {
+  overlayEl.hidden = true;
+  overlayContentEl.innerHTML = "";
+
+  if (prevWorldEventMode !== null) world.eventMode = prevWorldEventMode;
+  if (prevUiEventMode !== null) ui.eventMode = prevUiEventMode;
+
+  prevWorldEventMode = null;
+  prevUiEventMode = null;
+
+  app.ticker.start();
+  document.body.style.overflow = "";
+}
+
 function onWindowResize(): void {
   scaleManager.applyResize(app.screen.width, app.screen.height);
   dialogManager.onResize();
@@ -53,7 +90,7 @@ function onWorldPointerDown(e: FederatedPointerEvent): void {
   actor.setTarget(p.x, p.y);
 }
 
-function onItemPointerDown(e: FederatedPointerEvent): void {
+async function onItemPointerDown(e: FederatedPointerEvent): Promise<void> {
   const sprite = e.currentTarget as SpriteWithId;
   const itemId = sprite.__id;
   if (!itemId) {
@@ -68,6 +105,11 @@ function onItemPointerDown(e: FederatedPointerEvent): void {
       item.interactionPoint.x,
       item.interactionPoint.y,
       () => {
+        if (itemId === "picture" && ctx.verb === "look") {
+          void openOverlay("/assets/overlay/content.html");
+          return;
+        }
+
         switch (ctx.verb) {
           case "look":
             item.onLook?.();
@@ -103,6 +145,18 @@ async function main(): Promise<void> {
   });
 
   document.getElementById("pixi-container")!.appendChild(app.canvas);
+
+  overlayEl = document.getElementById("overlay") as HTMLDivElement;
+  overlayContentEl = document.getElementById("overlay-content") as HTMLDivElement;
+  overlayCloseBtn = document.getElementById("overlay-close") as HTMLButtonElement;
+
+  overlayCloseBtn.addEventListener("click", closeOverlay);
+  overlayEl.addEventListener("mousedown", (e) => {
+    if (e.target === overlayEl) closeOverlay();
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlayEl.hidden) closeOverlay();
+  });
 
   world = new Container();
   ui = new Container();
