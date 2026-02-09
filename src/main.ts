@@ -147,8 +147,12 @@ async function main(): Promise<void> {
   document.getElementById("pixi-container")!.appendChild(app.canvas);
 
   overlayEl = document.getElementById("overlay") as HTMLDivElement;
-  overlayContentEl = document.getElementById("overlay-content") as HTMLDivElement;
-  overlayCloseBtn = document.getElementById("overlay-close") as HTMLButtonElement;
+  overlayContentEl = document.getElementById(
+    "overlay-content",
+  ) as HTMLDivElement;
+  overlayCloseBtn = document.getElementById(
+    "overlay-close",
+  ) as HTMLButtonElement;
 
   overlayCloseBtn.addEventListener("click", closeOverlay);
   overlayEl.addEventListener("mousedown", (e) => {
